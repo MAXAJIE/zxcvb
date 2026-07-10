@@ -62,18 +62,48 @@ export const PIN_POSITIONS: Record<string, { x: number; y: number }> = {
   "canting-batik":         { x: 86, y: 66 },
 };
 
-// Parse whatever the QR encodes into an artifact id.
-// Accepts raw id "keris-panjang", url ".../artifact/keris-panjang", or JSON {id}.
+// Preset URL template — QR codes only need to contain "{slug}|{SN}"
+// (e.g. "keris-panjang|SN001") or a full URL that ends in
+// "/artifacts/{slug}|{SN}". Both forms parse to the artifact slug.
+export const ARTIFACT_URL_PREFIX = "/artifacts/";
+
+// Parse whatever the QR encodes into an artifact id (slug).
+// Accepts:
+//   - bare slug:              "keris-panjang"
+//   - slug + serial number:   "keris-panjang|SN001"
+//   - preset URL:             "https://any.host/artifacts/keris-panjang|SN001"
+//   - legacy artifact URL:    "https://any.host/artifact/keris-panjang"
+//   - JSON payload:           '{"id":"keris-panjang","sn":"SN001"}'
 export function parseArtifactCode(raw: string): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
-  // URL form
-  const m = trimmed.match(/artifact\/([a-z0-9-]+)/i);
-  if (m) return m[1].toLowerCase();
+
   // JSON form
   if (trimmed.startsWith("{")) {
-    try { const o = JSON.parse(trimmed); if (o && typeof o.id === "string") return o.id.toLowerCase(); } catch { /* noop */ }
+    try {
+      const o = JSON.parse(trimmed);
+      if (o && typeof o.id === "string") return o.id.toLowerCase();
+      if (o && typeof o.slug === "string") return o.slug.toLowerCase();
+    } catch { /* noop */ }
   }
+
+  // Preset URL "/artifacts/{code}" (plural) — code may include a "|SN" tail.
+  const presetMatch = trimmed.match(/\/artifacts\/([^/?#\s]+)/i);
+  if (presetMatch) {
+    const slug = presetMatch[1].split("|")[0];
+    if (/^[a-z0-9-]{3,64}$/i.test(slug)) return slug.toLowerCase();
+  }
+
+  // Legacy singular "/artifact/{slug}" URL
+  const legacyMatch = trimmed.match(/\/artifact\/([a-z0-9-]+)/i);
+  if (legacyMatch) return legacyMatch[1].toLowerCase();
+
+  // Pipe form "slug|SN001"
+  if (trimmed.includes("|")) {
+    const slug = trimmed.split("|")[0].trim();
+    if (/^[a-z0-9-]{3,64}$/i.test(slug)) return slug.toLowerCase();
+  }
+
   // Bare id
   if (/^[a-z0-9-]{3,64}$/i.test(trimmed)) return trimmed.toLowerCase();
   return null;

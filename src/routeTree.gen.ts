@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ArtifactsCodeRouteImport } from './routes/artifacts.$code'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedRewardsRouteImport } from './routes/_authenticated/rewards'
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
@@ -35,6 +36,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtifactsCodeRoute = ArtifactsCodeRouteImport.update({
+  id: '/artifacts/$code',
+  path: '/artifacts/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/quests': typeof AuthenticatedQuestsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/artifacts/$code': typeof ArtifactsCodeRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
 }
 export interface FileRoutesByTo {
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/quests': typeof AuthenticatedQuestsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/artifacts/$code': typeof ArtifactsCodeRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
 }
 export interface FileRoutesById {
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/rewards': typeof AuthenticatedRewardsRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
+  '/artifacts/$code': typeof ArtifactsCodeRoute
   '/_authenticated/artifact/$id': typeof AuthenticatedArtifactIdRoute
 }
 export interface FileRouteTypes {
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/quests'
     | '/rewards'
     | '/scan'
+    | '/artifacts/$code'
     | '/artifact/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/quests'
     | '/rewards'
     | '/scan'
+    | '/artifacts/$code'
     | '/artifact/$id'
   id:
     | '__root__'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quests'
     | '/_authenticated/rewards'
     | '/_authenticated/scan'
+    | '/artifacts/$code'
     | '/_authenticated/artifact/$id'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ArtifactsCodeRoute: typeof ArtifactsCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artifacts/$code': {
+      id: '/artifacts/$code'
+      path: '/artifacts/$code'
+      fullPath: '/artifacts/$code'
+      preLoaderRoute: typeof ArtifactsCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/scan': {
@@ -314,6 +334,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ArtifactsCodeRoute: ArtifactsCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

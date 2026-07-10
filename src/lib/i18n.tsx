@@ -85,6 +85,8 @@ const STRINGS = {
   scan_go: { bm: "Sahkan", en: "Confirm" },
   scan_invalid: { bm: "Kod tidak dikenali.", en: "Unrecognized code." },
   scan_not_found: { bm: "Artifak tidak ditemui.", en: "Artifact not found." },
+  scan_upload: { bm: "Muat naik imej QR", en: "Upload a QR image" },
+  map_locked_pin: { bm: "Artifak ini belum ditemui. Imbas kod QR di muzium untuk membukanya.", en: "This artifact hasn't been discovered yet. Scan its QR at the museum to unlock." },
   uq_offer_title: { bm: "Cabaran Unik Muncul!", en: "A Unique Challenge Appears!" },
   uq_offer_intro: { bm: "Anda telah membuka kuest rahsia. Terima untuk memulakan.", en: "You have unlocked a secret quest. Accept to begin." },
   uq_warn: { bm: "⚠︎ Semasa aktif, imbas kategori berbeza akan tolak 20 EXP dan gagalkan kuest.", en: "⚠︎ While active, scanning a different category deducts 20 EXP and fails the quest." },

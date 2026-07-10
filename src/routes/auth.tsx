@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -12,6 +13,24 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+type Strength = { level: 0 | 1 | 2 | 3; labelBm: string; labelEn: string; color: string };
+
+function scorePassword(p: string): Strength {
+  if (!p) return { level: 0, labelBm: "—", labelEn: "—", color: "oklch(0.85 0.02 80)" };
+  let types = 0;
+  if (/[a-z]/.test(p)) types++;
+  if (/[A-Z]/.test(p)) types++;
+  if (/[0-9]/.test(p)) types++;
+  if (/[^A-Za-z0-9]/.test(p)) types++;
+  if (p.length >= 12 && types >= 3) {
+    return { level: 3, labelBm: "Kuat", labelEn: "Strong", color: "oklch(0.62 0.16 145)" };
+  }
+  if (p.length >= 8 && types >= 2) {
+    return { level: 2, labelBm: "Sederhana", labelEn: "Medium", color: "oklch(0.72 0.16 55)" };
+  }
+  return { level: 1, labelBm: "Lemah", labelEn: "Weak", color: "oklch(0.6 0.22 25)" };
+}
+
 function AuthPage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
@@ -19,6 +38,9 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -30,17 +52,28 @@ function AuthPage() {
     });
   }, [navigate, redirect]);
 
+  const strength = useMemo(() => scorePassword(password), [password]);
+  const confirmMismatch = mode === "signup" && confirmPassword.length > 0 && password !== confirmPassword;
+  const canSignup = mode === "signup" && strength.level === 3 && password === confirmPassword;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(null); setInfo(null);
     try {
       if (mode === "signup") {
+        if (strength.level !== 3) {
+          throw new Error(lang === "bm"
+            ? "Kata laluan mesti mencapai tahap Kuat (hijau) sebelum mendaftar."
+            : "Password must reach Strong (green) before you can sign up.");
+        }
+        if (password !== confirmPassword) {
+          throw new Error(lang === "bm" ? "Pengesahan kata laluan tidak sepadan." : "Password confirmation does not match.");
+        }
         const { data, error } = await supabase.auth.signUp({
           email, password,
           options: { data: { username: username || email.split("@")[0] }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        // If email confirmation is required, Supabase returns a user without a session.
         if (!data.session) {
           setInfo(
             lang === "bm"
@@ -49,6 +82,7 @@ function AuthPage() {
           );
           setMode("signin");
           setPassword("");
+          setConfirmPassword("");
           return;
         }
       } else {
@@ -60,6 +94,8 @@ function AuthPage() {
       setError(e instanceof Error ? e.message : "Failed");
     } finally { setBusy(false); }
   }
+
+  const strengthLabel = lang === "bm" ? strength.labelBm : strength.labelEn;
 
   return (
     <div className="relative min-h-screen">
@@ -83,12 +119,92 @@ function AuthPage() {
             )}
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("email")}</span>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
+              <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
             </label>
+
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("password")}</span>
-              <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 pr-10 outline-none focus:border-ring"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? (lang === "bm" ? "Sembunyikan kata laluan" : "Hide password") : (lang === "bm" ? "Tunjukkan kata laluan" : "Show password")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 grid size-7 place-items-center rounded-md text-muted-foreground hover:text-ink"
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </label>
+
+            {mode === "signup" && (
+              <>
+                <div>
+                  <div className="flex h-1.5 gap-1 overflow-hidden rounded-full bg-muted">
+                    {[1, 2, 3].map((seg) => (
+                      <div
+                        key={seg}
+                        className="h-full flex-1 rounded-full transition-all"
+                        style={{ background: strength.level >= seg ? strength.color : "transparent" }}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">
+                      {lang === "bm" ? "Kekuatan kata laluan" : "Password strength"}
+                    </span>
+                    <span className="font-semibold" style={{ color: strength.level > 0 ? strength.color : "oklch(0.55 0.02 80)" }}>
+                      {strengthLabel}
+                    </span>
+                  </div>
+                  {strength.level < 3 && password.length > 0 && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {lang === "bm"
+                        ? "Perlu ≥12 aksara & 3 jenis (huruf besar, huruf kecil, nombor, simbol) untuk menjadi hijau."
+                        : "Need ≥12 characters and 3 of: lowercase, UPPERCASE, number, symbol to turn green."}
+                    </p>
+                  )}
+                </div>
+
+                <label className="block text-sm">
+                  <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {lang === "bm" ? "Sahkan Kata Laluan" : "Confirm Password"}
+                  </span>
+                  <div className="relative">
+                    <input
+                      type={showConfirm ? "text" : "password"}
+                      required
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`w-full rounded-md border bg-background px-3 py-2 pr-10 outline-none focus:border-ring ${confirmMismatch ? "border-destructive" : "border-input"}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      aria-label={showConfirm ? (lang === "bm" ? "Sembunyikan kata laluan" : "Hide password") : (lang === "bm" ? "Tunjukkan kata laluan" : "Show password")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 grid size-7 place-items-center rounded-md text-muted-foreground hover:text-ink"
+                    >
+                      {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  {confirmMismatch && (
+                    <p className="mt-1 text-[11px] text-destructive">
+                      {lang === "bm" ? "Kata laluan tidak sepadan." : "Passwords do not match."}
+                    </p>
+                  )}
+                </label>
+              </>
+            )}
+
             {error && <p className="text-sm text-destructive">{error}</p>}
             {info && (
               <div className="rounded-2xl border-2 border-primary/40 bg-primary/10 px-4 py-3 text-sm text-foreground">
@@ -98,9 +214,20 @@ function AuthPage() {
                 <p>{info}</p>
               </div>
             )}
-            <button disabled={busy} type="submit" className="bounce-soft w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60">
+            <button
+              disabled={busy || (mode === "signup" && !canSignup)}
+              type="submit"
+              className="bounce-soft w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60"
+            >
               {busy ? "…" : mode === "signin" ? t("signin") : t("signup")}
             </button>
+            {mode === "signup" && !canSignup && password.length > 0 && (
+              <p className="text-center text-[11px] text-muted-foreground">
+                {lang === "bm"
+                  ? "Butang Daftar terbuka apabila kata laluan menjadi hijau dan pengesahan sepadan."
+                  : "Sign up unlocks when the password bar turns green and the confirmation matches."}
+              </p>
+            )}
           </form>
 
           <div className="ornament-rule my-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">
@@ -109,7 +236,7 @@ function AuthPage() {
 
           <button
             type="button"
-            onClick={() => { setError(null); setMode(mode === "signin" ? "signup" : "signin"); }}
+            onClick={() => { setError(null); setInfo(null); setConfirmPassword(""); setMode(mode === "signin" ? "signup" : "signin"); }}
             className="w-full text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
             {mode === "signin" ? t("auth_new_here") : t("auth_have_acct")}

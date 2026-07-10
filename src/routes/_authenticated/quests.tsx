@@ -52,7 +52,34 @@ function QuestsPage() {
           </div>
         </div>
         <ul className="grid gap-3 sm:grid-cols-2">
-          {uqTmpls.map((tmpl) => {
+          {(() => {
+            // Rule: only ONE unique-quest widget is fully shown before the
+            // player accepts one. Declined templates disappear forever and
+            // the next eligible template takes its slot.
+            //   - if an "active" quest exists → show only that one
+            //   - else drop every "declined" template
+            //   - always keep "completed" / "failed" templates as history
+            //   - and show at most one "unseen" template whose trigger has
+            //     been scanned (the next available offer)
+            const activeTmpl = uqTmpls.find((tmpl) => data?.uqByTmpl.get(tmpl.id)?.status === "active");
+            let visible: typeof uqTmpls;
+            if (activeTmpl) {
+              visible = [activeTmpl];
+            } else {
+              let unseenTaken = false;
+              visible = uqTmpls.filter((tmpl) => {
+                const status = data?.uqByTmpl.get(tmpl.id)?.status ?? "unseen";
+                if (status === "declined") return false;
+                if (status === "completed" || status === "failed") return true;
+                // unseen — only show if trigger scanned and no earlier
+                // unseen widget already claimed the single visible slot.
+                if (!data?.scannedSet.has(tmpl.trigger_artifact_id)) return false;
+                if (unseenTaken) return false;
+                unseenTaken = true;
+                return true;
+              });
+            }
+            return visible.map((tmpl) => {
             const state = data?.uqByTmpl.get(tmpl.id);
             const status = state?.status ?? "unseen";
             const triggerScanned = data?.scannedSet.has(tmpl.trigger_artifact_id);
@@ -98,8 +125,10 @@ function QuestsPage() {
                 </div>
               </li>
             );
-          })}
+          });
+          })()}
         </ul>
+
       </section>
 
       {/* Normal quests */}
