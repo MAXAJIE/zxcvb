@@ -21,6 +21,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,14 +32,25 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setError(null);
+    setBusy(true); setError(null); setInfo(null);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email, password,
           options: { data: { username: username || email.split("@")[0] }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        // If email confirmation is required, Supabase returns a user without a session.
+        if (!data.session) {
+          setInfo(
+            lang === "bm"
+              ? `Kami telah menghantar e-mel pengesahan ke ${email}. Sila semak peti masuk (dan folder spam) anda, klik pautan pengesahan, kemudian log masuk di sini.`
+              : `We sent a confirmation email to ${email}. Please check your inbox (and spam folder), click the confirmation link, then come back here to sign in.`,
+          );
+          setMode("signin");
+          setPassword("");
+          return;
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -78,6 +90,14 @@ function AuthPage() {
               <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
             </label>
             {error && <p className="text-sm text-destructive">{error}</p>}
+            {info && (
+              <div className="rounded-2xl border-2 border-primary/40 bg-primary/10 px-4 py-3 text-sm text-foreground">
+                <p className="mb-1 font-display text-primary">
+                  {lang === "bm" ? "📬 Sila sahkan e-mel anda" : "📬 Please confirm your email"}
+                </p>
+                <p>{info}</p>
+              </div>
+            )}
             <button disabled={busy} type="submit" className="bounce-soft w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60">
               {busy ? "…" : mode === "signin" ? t("signin") : t("signup")}
             </button>

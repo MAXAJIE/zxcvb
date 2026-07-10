@@ -43,6 +43,7 @@ export function QrScannerBox({ onScan }: Props) {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || t("scan_permission"));
+      sfx.error();
     }
   }
 

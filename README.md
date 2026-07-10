@@ -1,5 +1,48 @@
 # HeritageQuest 🏛️✨
 
+## 🌍 Deploy to a Free Public URL (share with other devices)
+
+Pick one — all are free for hobby use.
+
+### Option A — Lovable (one click, easiest)
+
+1. Open the project in Lovable.
+2. Click **Publish** (top-right).
+3. You get a public URL like `https://<your-app>.lovable.app` — open it on **any phone / laptop / tablet**.
+
+### Option B — Cloudflare Pages (free, custom URL)
+
+```bash
+bun install
+bun run build           # produces .output/ for TanStack Start
+bunx wrangler pages deploy .output/public --project-name heritagequest
+```
+
+Wrangler prints a `https://heritagequest.pages.dev` URL you can share.
+
+### Option C — Quick LAN / hotspot share (no deploy, same Wi-Fi)
+
+```bash
+bun run dev -- --host 0.0.0.0
+# → Network: http://192.168.x.x:8080  (open this on other devices on the same Wi-Fi)
+```
+
+To share **outside your Wi-Fi** without deploying, tunnel it:
+
+```bash
+bunx cloudflared tunnel --url http://localhost:8080
+# → https://xxxx-xxxx.trycloudflare.com   (temporary public URL)
+```
+
+> **Note on sign-up email confirmation**
+> When a new user signs up, the app now shows an on-screen notice telling them
+> to **check their inbox (and spam folder)** for a confirmation link before
+> signing in. This uses Lovable Cloud's built-in email — no extra setup
+> required.
+
+---
+
+
 A gamified heritage-exploration web app. Visitors scan QR codes on artifacts to
 earn EXP, unlock badges & achievements, complete quests, and occasionally get
 offered a **Unique Quest** (accept-only-one-at-a-time, with EXP rewards or
