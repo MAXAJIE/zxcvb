@@ -43,6 +43,7 @@ const STRINGS = {
   material: { bm: "Bahan", en: "Material" },
   back: { bm: "Kembali", en: "Back" },
   close: { bm: "Tutup", en: "Close" },
+  inspect_image: { bm: "Lihat gambar penuh", en: "Inspect image" },
   redeem: { bm: "Tebus", en: "Redeem" },
   redeemed: { bm: "Berjaya ditebus!", en: "Redeemed!" },
   insufficient: { bm: "Mata tidak mencukupi", en: "Not enough points" },

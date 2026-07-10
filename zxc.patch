@@ -1,30 +1,113 @@
-diff --git a/src/integrations/supabase/auth-middleware.ts b/src/integrations/supabase/auth-middleware.ts
-index 0aefbe6..4e7e7bd 100644
---- a/src/integrations/supabase/auth-middleware.ts
-+++ b/src/integrations/supabase/auth-middleware.ts
-@@ -33,18 +33,13 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
- export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
-   async ({ next }) => {
-     
--    const SUPABASE_URL = process.env.SUPABASE_URL;
--    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
--
--    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
--      const missing = [
--        ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
--        ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
--      ];
--      const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
--      console.error(`[Supabase] ${message}`);
--      throw new Error(message);
--    }
-+    // Baked-in fallbacks so deployments without server env vars (e.g. Cloudflare
-+    // Workers where wrangler [vars] don't populate process.env) still work.
-+    // These are publishable (public/anon) values - safe to ship in code.
-+    const FALLBACK_SUPABASE_URL = 'https://saftxdownpalnwmddtss.supabase.co';
-+    const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_8hWcDhNmLyjYnmNhq-rQ8A_rsdYiAj4';
-+    const SUPABASE_URL = process.env.SUPABASE_URL || FALLBACK_SUPABASE_URL;
-+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
-     
-     const request = getRequest();
+diff --git a/src/components/ArtifactModal.tsx b/src/components/ArtifactModal.tsx
+index 5bc7026..24cba0d 100644
+--- a/src/components/ArtifactModal.tsx
++++ b/src/components/ArtifactModal.tsx
+@@ -1,4 +1,5 @@
+ import { useEffect, useState } from "react";
++import { createPortal } from "react-dom";
+ import {
+   Sparkles,
+   TrendingUp,
+@@ -11,6 +12,7 @@ import {
+   ScrollText,
+   FileText,
+   Image as ImageIcon,
++  X,
+ } from "lucide-react";
+ import { useI18n } from "@/lib/i18n";
+ import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
+@@ -61,6 +63,16 @@ export function ArtifactModal({ result, onClose }: Props) {
  
+   const [api, setApi] = useState<CarouselApi | null>(null);
+   const [index, setIndex] = useState(0);
++  const [lightbox, setLightbox] = useState<string | null>(null);
++
++  useEffect(() => {
++    if (!lightbox) return;
++    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
++    window.addEventListener("keydown", onKey);
++    const prevOverflow = document.body.style.overflow;
++    document.body.style.overflow = "hidden";
++    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; };
++  }, [lightbox]);
+ 
+   useEffect(() => {
+     if (!api) return;
+@@ -83,7 +95,7 @@ export function ArtifactModal({ result, onClose }: Props) {
+ 
+   return (
+     <Dialog open onOpenChange={(v) => !v && onClose()}>
+-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-white/75 backdrop-blur-xl">
++      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card">
+ 
+         <DialogHeader>
+           <div className="flex flex-wrap items-center gap-2">
+@@ -116,17 +128,20 @@ export function ArtifactModal({ result, onClose }: Props) {
+               <CarouselContent>
+                 {gallery.map((src, i) => (
+                   <CarouselItem key={`${src}-${i}`}>
+-                    <div
+-                      className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-xl opacity-30"
++                    <button
++                      type="button"
++                      onClick={() => setLightbox(src)}
++                      aria-label={`${name} – ${t("inspect_image")}`}
++                      className="group grid aspect-[16/10] w-full cursor-zoom-in place-items-center overflow-hidden rounded-xl transition-transform hover:scale-[1.01]"
+                       style={{ background: meta.bg }}
+                     >
+                       <img
+                         src={src}
+                         alt={`${name} – ${i + 1}`}
+-                        className="h-full w-full object-contain p-6 drop-shadow-xl"
++                        className="h-full w-full object-contain p-6 drop-shadow-xl transition-transform group-hover:scale-[1.02]"
+                         loading="lazy"
+                       />
+-                    </div>
++                    </button>
+ 
+                   </CarouselItem>
+                 ))}
+@@ -254,6 +269,31 @@ export function ArtifactModal({ result, onClose }: Props) {
+           )}
+         </div>
+       </DialogContent>
++      {lightbox && typeof document !== "undefined" && createPortal(
++        <div
++          role="dialog"
++          aria-modal="true"
++          aria-label={t("inspect_image")}
++          onClick={() => setLightbox(null)}
++          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
++        >
++          <button
++            type="button"
++            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
++            aria-label={t("close")}
++            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
++          >
++            <X className="size-5" />
++          </button>
++          <img
++            src={lightbox}
++            alt={name}
++            onClick={(e) => e.stopPropagation()}
++            className="max-h-[92vh] max-w-[95vw] cursor-zoom-out rounded-xl object-contain shadow-2xl"
++          />
++        </div>,
++        document.body,
++      )}
+     </Dialog>
+   );
+ }
+diff --git a/src/lib/i18n.tsx b/src/lib/i18n.tsx
+index 011693a..323dd8e 100644
+--- a/src/lib/i18n.tsx
++++ b/src/lib/i18n.tsx
+@@ -43,6 +43,7 @@ const STRINGS = {
+   material: { bm: "Bahan", en: "Material" },
+   back: { bm: "Kembali", en: "Back" },
+   close: { bm: "Tutup", en: "Close" },
++  inspect_image: { bm: "Lihat gambar penuh", en: "Inspect image" },
+   redeem: { bm: "Tebus", en: "Redeem" },
+   redeemed: { bm: "Berjaya ditebus!", en: "Redeemed!" },
+   insufficient: { bm: "Mata tidak mencukupi", en: "Not enough points" },

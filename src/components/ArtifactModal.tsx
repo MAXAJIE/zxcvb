@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Sparkles,
   TrendingUp,
@@ -11,6 +12,7 @@ import {
   ScrollText,
   FileText,
   Image as ImageIcon,
+  X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
@@ -61,6 +63,16 @@ export function ArtifactModal({ result, onClose }: Props) {
 
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [index, setIndex] = useState(0);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; };
+  }, [lightbox]);
 
   useEffect(() => {
     if (!api) return;
@@ -83,7 +95,7 @@ export function ArtifactModal({ result, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-white/75 backdrop-blur-xl">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card">
 
         <DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
@@ -116,17 +128,20 @@ export function ArtifactModal({ result, onClose }: Props) {
               <CarouselContent>
                 {gallery.map((src, i) => (
                   <CarouselItem key={`${src}-${i}`}>
-                    <div
-                      className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-xl opacity-30"
+                    <button
+                      type="button"
+                      onClick={() => setLightbox(src)}
+                      aria-label={`${name} – ${t("inspect_image")}`}
+                      className="group grid aspect-[16/10] w-full cursor-zoom-in place-items-center overflow-hidden rounded-xl transition-transform hover:scale-[1.01]"
                       style={{ background: meta.bg }}
                     >
                       <img
                         src={src}
                         alt={`${name} – ${i + 1}`}
-                        className="h-full w-full object-contain p-6 drop-shadow-xl"
+                        className="h-full w-full object-contain p-6 drop-shadow-xl transition-transform group-hover:scale-[1.02]"
                         loading="lazy"
                       />
-                    </div>
+                    </button>
 
                   </CarouselItem>
                 ))}
@@ -254,6 +269,31 @@ export function ArtifactModal({ result, onClose }: Props) {
           )}
         </div>
       </DialogContent>
+      {lightbox && typeof document !== "undefined" && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("inspect_image")}
+          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            aria-label={t("close")}
+            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <X className="size-5" />
+          </button>
+          <img
+            src={lightbox}
+            alt={name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[92vh] max-w-[95vw] cursor-zoom-out rounded-xl object-contain shadow-2xl"
+          />
+        </div>,
+        document.body,
+      )}
     </Dialog>
   );
 }
