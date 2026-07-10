@@ -83,7 +83,8 @@ export function ArtifactModal({ result, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card/50 backdrop-blur-xl">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-white/75 backdrop-blur-xl">
+
         <DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -116,7 +117,7 @@ export function ArtifactModal({ result, onClose }: Props) {
                 {gallery.map((src, i) => (
                   <CarouselItem key={`${src}-${i}`}>
                     <div
-                      className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-xl"
+                      className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-xl opacity-30"
                       style={{ background: meta.bg }}
                     >
                       <img
@@ -126,6 +127,7 @@ export function ArtifactModal({ result, onClose }: Props) {
                         loading="lazy"
                       />
                     </div>
+
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -148,16 +150,18 @@ export function ArtifactModal({ result, onClose }: Props) {
           </div>
         ) : (
           <div
-            className="grid aspect-[16/10] place-items-center rounded-xl text-6xl"
+            className="grid aspect-[16/10] place-items-center rounded-xl text-6xl opacity-30"
             style={{ background: meta.bg }}
           >
             {meta.emoji}
           </div>
         )}
 
+
         {/* Specs */}
         {specs.length > 0 && (
-          <div className="rounded-xl border border-border bg-secondary/40 p-4">
+          <div className="rounded-xl border border-border bg-secondary/30 p-4">
+
             <div className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
               <FileText className="h-3 w-3" /> {t("visit_summary")}
             </div>
@@ -179,7 +183,8 @@ export function ArtifactModal({ result, onClose }: Props) {
         )}
 
         {/* Story / description */}
-        <div className="rounded-xl border border-border bg-accent/50 p-4">
+        <div className="rounded-xl border border-border bg-accent/30 p-4">
+
           <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
             <Sparkles className="h-3 w-3" /> {name}
           </div>
@@ -189,7 +194,8 @@ export function ArtifactModal({ result, onClose }: Props) {
         </div>
 
         {/* Reward strip */}
-        <div className="rounded-xl border-2 border-border bg-card p-4">
+        <div className="rounded-xl border-2 border-border bg-card/30 p-4">
+
           {result.alreadyScanned ? (
             <p className="text-sm text-muted-foreground">{t("already_claimed")}</p>
           ) : (
