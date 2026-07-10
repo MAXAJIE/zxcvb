@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, Check, Sparkles, Flag, Award, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { artifactImageUrl } from "@/lib/artifact-images";
 import { scanArtifact } from "@/lib/museum.functions";
 import { EXP_PER_SCAN } from "@/lib/museum";
 import { sfx } from "@/lib/sfx";
@@ -16,7 +17,11 @@ export const Route = createFileRoute("/_authenticated/artifact/$id")({
 async function fetchArtifact(id: string) {
   const [{ data: artifact }, { data: mine }] = await Promise.all([
     supabase.from("artifacts").select("*").eq("id", id).maybeSingle(),
-    supabase.from("user_artifact_progress").select("artifact_id, scanned_at, exp_earned").eq("artifact_id", id).maybeSingle(),
+    supabase
+      .from("user_artifact_progress")
+      .select("artifact_id, scanned_at, exp_earned")
+      .eq("artifact_id", id)
+      .maybeSingle(),
   ]);
   return { artifact, mine };
 }
@@ -42,7 +47,10 @@ function ArtifactPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
 
-  const { data, isLoading } = useQuery({ queryKey: ["artifact", id], queryFn: () => fetchArtifact(id) });
+  const { data, isLoading } = useQuery({
+    queryKey: ["artifact", id],
+    queryFn: () => fetchArtifact(id),
+  });
   const artifact = data?.artifact;
   const alreadyClaimed = !!data?.mine;
 
@@ -51,11 +59,14 @@ function ArtifactPage() {
     try {
       const res = (await scanFn({ data: { artifactId: id } })) as ScanResult;
       setResult(res);
-      if (res.levelUps > 0) sfx.levelUp(); else sfx.success();
+      if (res.levelUps > 0) sfx.levelUp();
+      else sfx.success();
       if (res.newBadges.length > 0) setTimeout(() => sfx.coin(), 400);
       qc.invalidateQueries();
       router.invalidate();
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
@@ -66,10 +77,14 @@ function ArtifactPage() {
   const era = lang === "bm" ? artifact.era_bm : artifact.era_en;
   const origin = lang === "bm" ? artifact.origin_bm : artifact.origin_en;
   const material = lang === "bm" ? artifact.material_bm : artifact.material_en;
+  const imageUrl = artifactImageUrl(artifact.id, artifact.image_url);
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/map" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-ink">
+      <Link
+        to="/map"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-ink"
+      >
         <ArrowLeft className="size-4" /> {t("back")}
       </Link>
 
@@ -86,18 +101,39 @@ function ArtifactPage() {
           <h1 className="mt-2 font-display text-4xl leading-tight text-ink">{name}</h1>
         </div>
 
+        {imageUrl && (
+          <div className="border-b border-border bg-card px-6 py-5">
+            <div className="grid aspect-[16/10] place-items-center overflow-hidden rounded-2xl bg-accent/40">
+              <img
+                src={imageUrl}
+                alt={name}
+                className="h-full w-full object-contain p-4"
+                loading="eager"
+                width={960}
+                height={600}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-6 p-6 md:grid-cols-3">
           <dl className="space-y-3 text-sm md:col-span-1">
             <div>
-              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("era")}</dt>
+              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {t("era")}
+              </dt>
               <dd className="font-display text-base">{era}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("origin")}</dt>
+              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {t("origin")}
+              </dt>
               <dd className="font-display text-base">{origin}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("material")}</dt>
+              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {t("material")}
+              </dt>
               <dd className="font-display text-base">{material}</dd>
             </div>
           </dl>
@@ -132,7 +168,9 @@ function RewardSummary({ result }: { result: ScanResult }) {
   const { t, lang } = useI18n();
   return (
     <div className="space-y-3 pop-in">
-      <p className="font-display text-3xl text-primary">+{result.expGained} {t("exp")} ✨</p>
+      <p className="font-display text-3xl text-primary">
+        +{result.expGained} {t("exp")} ✨
+      </p>
       {result.levelUps > 0 && (
         <div className="flex items-center gap-2 text-sm">
           <TrendingUp className="size-4 text-gold" />
@@ -152,7 +190,9 @@ function RewardSummary({ result }: { result: ScanResult }) {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        {lang === "bm" ? "Rekod telah disimpan. Kembali ke peta." : "Recorded. Head back to the map."}
+        {lang === "bm"
+          ? "Rekod telah disimpan. Kembali ke peta."
+          : "Recorded. Head back to the map."}
       </p>
     </div>
   );

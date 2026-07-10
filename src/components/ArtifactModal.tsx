@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { artifactImageUrl } from "@/lib/artifact-images";
 import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
 import type { ScanResult } from "@/lib/museum.functions";
 import {
@@ -58,7 +59,8 @@ export function ArtifactModal({ result, onClose }: Props) {
   // Single canonical image for now — kept in a gallery array so the
   // Carousel structure matches the reference and can grow to N images
   // without changing the render code.
-  const gallery: string[] = a.image_url ? [a.image_url] : [];
+  const imageUrl = artifactImageUrl(a.id, a.image_url);
+  const gallery: string[] = imageUrl ? [imageUrl] : [];
   const total = gallery.length;
 
   const [api, setApi] = useState<CarouselApi | null>(null);
@@ -67,11 +69,16 @@ export function ArtifactModal({ result, onClose }: Props) {
 
   useEffect(() => {
     if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+    };
     window.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; };
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [lightbox]);
 
   useEffect(() => {
@@ -89,14 +96,16 @@ export function ArtifactModal({ result, onClose }: Props) {
   const uq = result.uniqueQuest;
 
   const specs: { label: string; value: string; icon: React.ReactNode }[] = [];
-  if (era)      specs.push({ label: t("era"),      value: era,      icon: <ScrollText className="h-3.5 w-3.5" /> });
-  if (origin)   specs.push({ label: t("origin"),   value: origin,   icon: <MapPin className="h-3.5 w-3.5" /> });
-  if (material) specs.push({ label: t("material"), value: material, icon: <Layers className="h-3.5 w-3.5" /> });
+  if (era)
+    specs.push({ label: t("era"), value: era, icon: <ScrollText className="h-3.5 w-3.5" /> });
+  if (origin)
+    specs.push({ label: t("origin"), value: origin, icon: <MapPin className="h-3.5 w-3.5" /> });
+  if (material)
+    specs.push({ label: t("material"), value: material, icon: <Layers className="h-3.5 w-3.5" /> });
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card">
-
         <DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -106,18 +115,12 @@ export function ArtifactModal({ result, onClose }: Props) {
               {meta.emoji} {t(`category_${cat}` as never)}
             </span>
           </div>
-          <DialogTitle className="pr-8 text-2xl font-semibold tracking-tight">
-            {name}
-          </DialogTitle>
+          <DialogTitle className="pr-8 text-2xl font-semibold tracking-tight">{name}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-3 pt-1 text-sm">
             <span className="flex items-center gap-1">
               <Landmark className="h-3.5 w-3.5" /> {origin || t("museum")}
             </span>
-            {era && (
-              <span className="tabular-nums font-medium text-foreground">
-                {era}
-              </span>
-            )}
+            {era && <span className="tabular-nums font-medium text-foreground">{era}</span>}
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +145,6 @@ export function ArtifactModal({ result, onClose }: Props) {
                         loading="lazy"
                       />
                     </button>
-
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -172,11 +174,9 @@ export function ArtifactModal({ result, onClose }: Props) {
           </div>
         )}
 
-
         {/* Specs */}
         {specs.length > 0 && (
           <div className="rounded-xl border border-border bg-secondary/30 p-4">
-
             <div className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
               <FileText className="h-3 w-3" /> {t("visit_summary")}
             </div>
@@ -199,18 +199,14 @@ export function ArtifactModal({ result, onClose }: Props) {
 
         {/* Story / description */}
         <div className="rounded-xl border border-border bg-accent/30 p-4">
-
           <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
             <Sparkles className="h-3 w-3" /> {name}
           </div>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
-            {desc}
-          </p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{desc}</p>
         </div>
 
         {/* Reward strip */}
         <div className="rounded-xl border-2 border-border bg-card/30 p-4">
-
           {result.alreadyScanned ? (
             <p className="text-sm text-muted-foreground">{t("already_claimed")}</p>
           ) : (
@@ -225,16 +221,13 @@ export function ArtifactModal({ result, onClose }: Props) {
                   {result.expGained} EXP {result.expGained >= 0 ? "✨" : "💥"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t("total_exp")}:{" "}
-                  <span className="font-display text-ink">
-                    {result.totalExp}
-                  </span>
+                  {t("total_exp")}: <span className="font-display text-ink">{result.totalExp}</span>
                 </p>
               </div>
               {uq?.kind === "activeCorrect" && (
                 <p className="flex items-center gap-2 text-sm text-jungle">
-                  <Sparkles className="size-4" /> {t("uq_correct_bonus")} ·{" "}
-                  {uq.correctScans}/{uq.targetCount}
+                  <Sparkles className="size-4" /> {t("uq_correct_bonus")} · {uq.correctScans}/
+                  {uq.targetCount}
                 </p>
               )}
               {uq?.kind === "activeCorrectComplete" && (
@@ -249,8 +242,8 @@ export function ArtifactModal({ result, onClose }: Props) {
               )}
               {result.levelUps > 0 && (
                 <p className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="size-4 text-gold" /> {t("level_up")} →
-                  Lv. {result.level} (+{result.pointsGained} {t("points")})
+                  <TrendingUp className="size-4 text-gold" /> {t("level_up")} → Lv. {result.level}{" "}
+                  (+{result.pointsGained} {t("points")})
                 </p>
               )}
               {result.newBadges.length > 0 && (
@@ -261,39 +254,44 @@ export function ArtifactModal({ result, onClose }: Props) {
               )}
               {result.newAchievements.length > 0 && (
                 <p className="flex items-center gap-2 text-sm">
-                  <Sparkles className="size-4 text-indigo" />{" "}
-                  {t("new_achievement")}: {result.newAchievements.length}
+                  <Sparkles className="size-4 text-indigo" /> {t("new_achievement")}:{" "}
+                  {result.newAchievements.length}
                 </p>
               )}
             </div>
           )}
         </div>
       </DialogContent>
-      {lightbox && typeof document !== "undefined" && createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={t("inspect_image")}
-          onClick={() => setLightbox(null)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
-        >
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
-            aria-label={t("close")}
-            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+      {lightbox &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("inspect_image")}
+            onClick={() => setLightbox(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
           >
-            <X className="size-5" />
-          </button>
-          <img
-            src={lightbox}
-            alt={name}
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[92vh] max-w-[95vw] cursor-zoom-out rounded-xl object-contain shadow-2xl"
-          />
-        </div>,
-        document.body,
-      )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox(null);
+              }}
+              aria-label={t("close")}
+              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            >
+              <X className="size-5" />
+            </button>
+            <img
+              src={lightbox}
+              alt={name}
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[92vh] max-w-[95vw] cursor-zoom-out rounded-xl object-contain shadow-2xl"
+            />
+          </div>,
+          document.body,
+        )}
     </Dialog>
   );
 }

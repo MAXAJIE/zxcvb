@@ -5,9 +5,9 @@ compatibility_date = "2024-11-06"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-SUPABASE_URL = "https://saftxdownpalnwmddtss.supabase.co"
-SUPABASE_PUBLISHABLE_KEY = "sb_publishable_8hWcDhNmLyjYnmNhq-rQ8A_rsdYiAj4"
-SUPABASE_PROJECT_ID = "saftxdownpalnwmddtss"
-VITE_SUPABASE_URL = "https://saftxdownpalnwmddtss.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_8hWcDhNmLyjYnmNhq-rQ8A_rsdYiAj4"
-VITE_SUPABASE_PROJECT_ID = "saftxdownpalnwmddtss"
+SUPABASE_URL = "https://asgejhvisfsohdavmsuc.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_UCOxv52H-SlYxPkdgnayLg_CMBMOc-M"
+SUPABASE_PROJECT_ID = "asgejhvisfsohdavmsuc"
+VITE_SUPABASE_URL = "https://asgejhvisfsohdavmsuc.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_UCOxv52H-SlYxPkdgnayLg_CMBMOc-M"
+VITE_SUPABASE_PROJECT_ID = "asgejhvisfsohdavmsuc"
