@@ -1,198 +1,63 @@
-From ff87cb0f9c54cd67fdff0523138b8808e91baa7c Mon Sep 17 00:00:00 2001
+From 23ba8b7fa56953f940ce410c903bdd509e432018 Mon Sep 17 00:00:00 2001
 From: "gpt-engineer-app[bot]"
  <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
-Date: Fri, 10 Jul 2026 02:57:18 +0000
-Subject: [PATCH 1/4] Changes
+Date: Fri, 10 Jul 2026 03:48:26 +0000
+Subject: [PATCH] Changes
 
 ---
- src/components/QrScannerBox.tsx | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/src/components/QrScannerBox.tsx b/src/components/QrScannerBox.tsx
-index f44b11a..0f51917 100644
---- a/src/components/QrScannerBox.tsx
-+++ b/src/components/QrScannerBox.tsx
-@@ -43,6 +43,7 @@ export function QrScannerBox({ onScan }: Props) {
-     } catch (e) {
-       const msg = e instanceof Error ? e.message : String(e);
-       setError(msg || t("scan_permission"));
-+      sfx.error();
-     }
-   }
- 
--- 
-2.51.2
-
-
-From 036a956d75872d9c8d242ccf6f9e243347c0fea3 Mon Sep 17 00:00:00 2001
-From: "gpt-engineer-app[bot]"
- <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
-Date: Fri, 10 Jul 2026 02:57:30 +0000
-Subject: [PATCH 2/4] Changes
-
----
- src/routeTree.gen.ts | 10 ----------
- src/routes/auth.tsx  | 16 ++++++++++++++--
- 2 files changed, 14 insertions(+), 12 deletions(-)
-
-diff --git a/src/routeTree.gen.ts b/src/routeTree.gen.ts
-index b2fb593..5bbc35b 100644
---- a/src/routeTree.gen.ts
-+++ b/src/routeTree.gen.ts
-@@ -255,13 +255,3 @@ const rootRouteChildren: RootRouteChildren = {
- export const routeTree = rootRouteImport
-   ._addFileChildren(rootRouteChildren)
-   ._addFileTypes<FileRouteTypes>()
--
--import type { getRouter } from './router.tsx'
--import type { startInstance } from './start.ts'
--declare module '@tanstack/react-start' {
--  interface Register {
--    ssr: true
--    router: Awaited<ReturnType<typeof getRouter>>
--    config: Awaited<ReturnType<typeof startInstance.getOptions>>
--  }
--}
-diff --git a/src/routes/auth.tsx b/src/routes/auth.tsx
-index 3699ce3..9c1d8c3 100644
---- a/src/routes/auth.tsx
-+++ b/src/routes/auth.tsx
-@@ -21,6 +21,7 @@ function AuthPage() {
-   const [password, setPassword] = useState("");
-   const [username, setUsername] = useState("");
-   const [error, setError] = useState<string | null>(null);
-+  const [info, setInfo] = useState<string | null>(null);
-   const [busy, setBusy] = useState(false);
- 
-   useEffect(() => {
-@@ -31,14 +32,25 @@ function AuthPage() {
- 
-   async function submit(e: React.FormEvent) {
-     e.preventDefault();
--    setBusy(true); setError(null);
-+    setBusy(true); setError(null); setInfo(null);
-     try {
-       if (mode === "signup") {
--        const { error } = await supabase.auth.signUp({
-+        const { data, error } = await supabase.auth.signUp({
-           email, password,
-           options: { data: { username: username || email.split("@")[0] }, emailRedirectTo: window.location.origin },
-         });
-         if (error) throw error;
-+        // If email confirmation is required, Supabase returns a user without a session.
-+        if (!data.session) {
-+          setInfo(
-+            lang === "bm"
-+              ? `Kami telah menghantar e-mel pengesahan ke ${email}. Sila semak peti masuk (dan folder spam) anda, klik pautan pengesahan, kemudian log masuk di sini.`
-+              : `We sent a confirmation email to ${email}. Please check your inbox (and spam folder), click the confirmation link, then come back here to sign in.`,
-+          );
-+          setMode("signin");
-+          setPassword("");
-+          return;
-+        }
-       } else {
-         const { error } = await supabase.auth.signInWithPassword({ email, password });
-         if (error) throw error;
--- 
-2.51.2
-
-
-From a3357ce259f244c347734e045cec654aa908a7c0 Mon Sep 17 00:00:00 2001
-From: "gpt-engineer-app[bot]"
- <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
-Date: Fri, 10 Jul 2026 02:57:38 +0000
-Subject: [PATCH 3/4] Changes
-
----
- src/routes/auth.tsx | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/src/routes/auth.tsx b/src/routes/auth.tsx
-index 9c1d8c3..4684507 100644
---- a/src/routes/auth.tsx
-+++ b/src/routes/auth.tsx
-@@ -90,6 +90,14 @@ function AuthPage() {
-               <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
-             </label>
-             {error && <p className="text-sm text-destructive">{error}</p>}
-+            {info && (
-+              <div className="rounded-2xl border-2 border-primary/40 bg-primary/10 px-4 py-3 text-sm text-foreground">
-+                <p className="mb-1 font-display text-primary">
-+                  {lang === "bm" ? "📬 Sila sahkan e-mel anda" : "📬 Please confirm your email"}
-+                </p>
-+                <p>{info}</p>
-+              </div>
-+            )}
-             <button disabled={busy} type="submit" className="bounce-soft w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60">
-               {busy ? "…" : mode === "signin" ? t("signin") : t("signup")}
-             </button>
--- 
-2.51.2
-
-
-From 2db1ff3c1bd8322c334b72e64536fc27d692e5a0 Mon Sep 17 00:00:00 2001
-From: "gpt-engineer-app[bot]"
- <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
-Date: Fri, 10 Jul 2026 02:58:04 +0000
-Subject: [PATCH 4/4] Changes
-
----
- README.md | 43 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
+ README.md | 33 ++++++++++++++++++++++++++++++---
+ 1 file changed, 30 insertions(+), 3 deletions(-)
 
 diff --git a/README.md b/README.md
-index 6f8ff38..5e08cbe 100644
+index e5de324..89e5a83 100644
 --- a/README.md
 +++ b/README.md
-@@ -1,5 +1,48 @@
- # HeritageQuest 🏛️✨
+@@ -13,15 +13,42 @@ Pick one — all are free for hobby use.
+ ### Option B — Cloudflare Workers (free, SSR-capable, recommended for this app)
  
-+## 🌍 Deploy to a Free Public URL (share with other devices)
+ This app uses **TanStack Start SSR** — it needs a server runtime, not just static
+-files. Deploy as a **Worker**, not as Pages:
++files. Deploy as a **Worker**, not as Pages.
 +
-+Pick one — all are free for hobby use.
++**Step 1 — build:**
+ 
+ ```bash
+ bun install
+ bun run build                       # produces .output/ (Nitro Cloudflare target)
+-bunx wrangler deploy --config .output/server/wrangler.json
+ ```
+ 
+-Wrangler prints your URL: `https://heritagequest.<your-account>.workers.dev`.
++**Step 2 — set the Supabase env vars on the Worker (REQUIRED).**
 +
-+### Option A — Lovable (one click, easiest)
++The server side of the app reads `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
++from `process.env` at request time. Locally these come from `.env`, but a
++deployed Cloudflare Worker does **not** read your local `.env` — you MUST
++provide them to the Worker. If you skip this step you'll see
++`Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY`
++the moment any server function runs (e.g. submitting an artifact code).
 +
-+1. Open the project in Lovable.
-+2. Click **Publish** (top-right).
-+3. You get a public URL like `https://<your-app>.lovable.app` — open it on **any phone / laptop / tablet**.
-+
-+### Option B — Cloudflare Pages (free, custom URL)
-+
-+```bash
-+bun install
-+bun run build           # produces .output/ for TanStack Start
-+bunx wrangler pages deploy .output/public --project-name heritagequest
-+```
-+
-+Wrangler prints a `https://heritagequest.pages.dev` URL you can share.
-+
-+### Option C — Quick LAN / hotspot share (no deploy, same Wi-Fi)
-+
-+```bash
-+bun run dev -- --host 0.0.0.0
-+# → Network: http://192.168.x.x:8080  (open this on other devices on the same Wi-Fi)
-+```
-+
-+To share **outside your Wi-Fi** without deploying, tunnel it:
++Both values are **publishable** (safe to commit / paste) so use plain vars,
++not secrets. Copy them from your local `.env`:
 +
 +```bash
-+bunx cloudflared tunnel --url http://localhost:8080
-+# → https://xxxx-xxxx.trycloudflare.com   (temporary public URL)
++# from repo root — one-shot deploy with vars baked in
++bunx wrangler deploy \
++  --config .output/server/wrangler.json \
++  --var SUPABASE_URL:"https://<your-project-ref>.supabase.co" \
++  --var SUPABASE_PUBLISHABLE_KEY:"sb_publishable_xxxxxxxxxxxxxxxxxxxx"
 +```
 +
-+> **Note on sign-up email confirmation**
-+> When a new user signs up, the app now shows an on-screen notice telling them
-+> to **check their inbox (and spam folder)** for a confirmation link before
-+> signing in. This uses Lovable Cloud's built-in email — no extra setup
-+> required.
++> Re-run the same command every time you deploy — `--var` values are only
++> attached to that upload. Prefer to set them once? Add a `[vars]` block to
++> `.output/server/wrangler.json` before `wrangler deploy`, or run
++> `bunx wrangler secret put SUPABASE_URL --config .output/server/wrangler.json`
++> (and the same for `SUPABASE_PUBLISHABLE_KEY`) so they persist across deploys.
 +
-+---
-+
-+
- A gamified heritage-exploration web app. Visitors scan QR codes on artifacts to
- earn EXP, unlock badges & achievements, complete quests, and occasionally get
- offered a **Unique Quest** (accept-only-one-at-a-time, with EXP rewards or
++Wrangler prints your URL: `https://<worker-name>.<your-account>.workers.dev`.
+ Open **that** URL on any device.
+ 
+ > ⚠️ **Do NOT use `wrangler pages deploy .output/public`.**
 -- 
 2.51.2
 
