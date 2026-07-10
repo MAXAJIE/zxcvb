@@ -39,23 +39,30 @@ type MapArtifact = {
 };
 
 async function fetchMap() {
-  const [{ data: artifacts }, { data: scanned }] = await Promise.all([
+  const [{ data: artifacts }, { data: progress }] = await Promise.all([
     supabase
       .from("artifacts")
       .select(
         "id, category, name_bm, name_en, description_bm, description_en, era_bm, era_en, origin_bm, origin_en, material_bm, material_en, image_url, sort_order",
       )
       .order("sort_order"),
-    supabase.from("user_artifact_progress").select("artifact_id"),
+    supabase.from("user_artifact_progress").select("*"),
   ]);
-  const set = new Set((scanned ?? []).map((r) => r.artifact_id));
-  return { artifacts: (artifacts ?? []) as MapArtifact[], scannedSet: set };
+  
+  const progressMap = new Map((progress ?? []).map((p) => [p.artifact_id, p]));
+  const scannedSet = new Set((progress ?? []).map((r) => r.artifact_id));
+  
+  return { 
+    artifacts: (artifacts ?? []) as MapArtifact[], 
+    scannedSet,
+    progressMap
+  };
 }
 
 // Build a read-only ScanResult so ArtifactModal renders the same rich pop-up
 // used after a fresh scan, but with the reward strip in "already claimed"
 // mode (no EXP re-award, no quest side-effects).
-function toReadOnlyResult(a: MapArtifact): ScanResult {
+function toReadOnlyResult(a: MapArtifact, progress?: any): ScanResult {
   return {
     alreadyScanned: true,
     expGained: 0,
@@ -67,6 +74,8 @@ function toReadOnlyResult(a: MapArtifact): ScanResult {
     newBadges: [],
     newQuests: [],
     newAchievements: [],
+    quizCorrectCount: progress?.quiz_correct_count ?? null,
+    quizTotalQuestions: progress?.quiz_total_questions ?? null,
     uniqueQuest: null,
     offeredUniqueQuest: null,
     artifact: a,
@@ -78,6 +87,7 @@ function MapPage() {
   const { data } = useQuery({ queryKey: ["map"], queryFn: fetchMap });
   const artifacts = data?.artifacts ?? [];
   const scannedSet = data?.scannedSet ?? new Set<string>();
+  const progressMap = data?.progressMap ?? new Map();
   const totalScanned = scannedSet.size;
   const pct = Math.round((totalScanned / TOTAL_ARTIFACTS) * 100);
 
@@ -363,7 +373,10 @@ function MapPage() {
       </section>
 
       {selected && (
-        <ArtifactModal result={toReadOnlyResult(selected)} onClose={() => setSelected(null)} />
+        <ArtifactModal 
+          result={toReadOnlyResult(selected, progressMap.get(selected.id))} 
+          onClose={() => setSelected(null)} 
+        />
       )}
     </div>
   );

@@ -1,113 +1,983 @@
 diff --git a/src/components/ArtifactModal.tsx b/src/components/ArtifactModal.tsx
-index 5bc7026..24cba0d 100644
+index d69b293..ef37a42 100644
 --- a/src/components/ArtifactModal.tsx
 +++ b/src/components/ArtifactModal.tsx
-@@ -1,4 +1,5 @@
- import { useEffect, useState } from "react";
-+import { createPortal } from "react-dom";
- import {
-   Sparkles,
-   TrendingUp,
-@@ -11,6 +12,7 @@ import {
-   ScrollText,
+@@ -13,11 +13,15 @@ import {
    FileText,
    Image as ImageIcon,
-+  X,
+   X,
++  HelpCircle,
++  ArrowLeft,
  } from "lucide-react";
  import { useI18n } from "@/lib/i18n";
+ import { artifactImageUrl } from "@/lib/artifact-images";
  import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
-@@ -61,6 +63,16 @@ export function ArtifactModal({ result, onClose }: Props) {
- 
-   const [api, setApi] = useState<CarouselApi | null>(null);
-   const [index, setIndex] = useState(0);
-+  const [lightbox, setLightbox] = useState<string | null>(null);
+ import type { ScanResult } from "@/lib/museum.functions";
++import { sfx } from "@/lib/sfx";
++import { ArtifactQuizSection } from "@/components/ArtifactQuizSection";
+ import {
+   Dialog,
+   DialogContent,
+@@ -39,14 +43,12 @@ interface Props {
+   onClose: () => void;
+ }
+-// Rebuilt to match the reference "last-phase recommendation card" pop-up:
+-// shadcn Dialog wrapping a header, a Carousel image gallery with an
+-// index counter, a tag row, a structured specs grid, a description block,
+-// an AI-remarks-style story block, and a reward strip footer.
+-// Theme + color palette intentionally left untouched.
+ export function ArtifactModal({ result, onClose }: Props) {
+   const { t, lang } = useI18n();
+-  const a = result.artifact;
++  const [showQuiz, setShowQuiz] = useState(false);
++  const [localResult, setLocalResult] = useState<ScanResult>(result);
 +
-+  useEffect(() => {
-+    if (!lightbox) return;
-+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
-+    window.addEventListener("keydown", onKey);
-+    const prevOverflow = document.body.style.overflow;
-+    document.body.style.overflow = "hidden";
-+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; };
-+  }, [lightbox]);
- 
-   useEffect(() => {
-     if (!api) return;
-@@ -83,7 +95,7 @@ export function ArtifactModal({ result, onClose }: Props) {
- 
++  const a = localResult.artifact;
+   const cat = a.category as CategoryKey;
+   const meta = CATEGORY_META[cat];
+
+@@ -56,9 +58,8 @@ export function ArtifactModal({ result, onClose }: Props) {
+   const origin = lang === "bm" ? a.origin_bm : a.origin_en;
+   const material = lang === "bm" ? a.material_bm : a.material_en;
+
+-  // Single canonical image for now — kept in a gallery array so the
+-  // Carousel structure matches the reference and can grow to N images
+-  // without changing the render code.
++  const quizDone = localResult.quizCorrectCount !== null && localResult.quizCorrectCount !== undefined;
++
+   const imageUrl = artifactImageUrl(a.id, a.image_url);
+   const gallery: string[] = imageUrl ? [imageUrl] : [];
+   const total = gallery.length;
+@@ -93,7 +94,7 @@ export function ArtifactModal({ result, onClose }: Props) {
+     };
+   }, [api, total]);
+
+-  const uq = result.uniqueQuest;
++  const uq = localResult.uniqueQuest;
+
+   const specs: { label: string; value: string; icon: React.ReactNode }[] = [];
+   if (era)
+@@ -103,161 +104,220 @@ export function ArtifactModal({ result, onClose }: Props) {
+   if (material)
+     specs.push({ label: t("material"), value: material, icon: <Layers className="h-3.5 w-3.5" /> });
+
++  function handleLockedQuizClick() {
++    sfx.error();
++  }
++
    return (
      <Dialog open onOpenChange={(v) => !v && onClose()}>
--      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-white/75 backdrop-blur-xl">
-+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card">
- 
-         <DialogHeader>
-           <div className="flex flex-wrap items-center gap-2">
-@@ -116,17 +128,20 @@ export function ArtifactModal({ result, onClose }: Props) {
-               <CarouselContent>
-                 {gallery.map((src, i) => (
-                   <CarouselItem key={`${src}-${i}`}>
--                    <div
--                      className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-xl opacity-30"
-+                    <button
-+                      type="button"
-+                      onClick={() => setLightbox(src)}
-+                      aria-label={`${name} – ${t("inspect_image")}`}
-+                      className="group grid aspect-[16/10] w-full cursor-zoom-in place-items-center overflow-hidden rounded-xl transition-transform hover:scale-[1.01]"
-                       style={{ background: meta.bg }}
+-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card">
+-        <DialogHeader>
+-          <div className="flex flex-wrap items-center gap-2">
+-            <span
+-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]"
+-              style={{ borderColor: meta.color, color: meta.color }}
+-            >
+-              {meta.emoji} {t(`category_${cat}` as never)}
+-            </span>
+-          </div>
+-          <DialogTitle className="pr-8 text-2xl font-semibold tracking-tight">{name}</DialogTitle>
+-          <DialogDescription className="flex flex-wrap items-center gap-3 pt-1 text-sm">
+-            <span className="flex items-center gap-1">
+-              <Landmark className="h-3.5 w-3.5" /> {origin || t("museum")}
+-            </span>
+-            {era && <span className="tabular-nums font-medium text-foreground">{era}</span>}
+-          </DialogDescription>
+-        </DialogHeader>
++      <DialogContent
++        className={`max-h-[90vh] overflow-y-auto rounded-[28px] border-2 border-border bg-card transition-all duration-500 ${
++          showQuiz ? "max-w-6xl" : "max-w-3xl"
++        }`}
++      >
++        <div className={`flex flex-col gap-6 lg:flex-row ${showQuiz ? "lg:items-start" : ""}`}>
++          <div className={`flex-1 space-y-6 ${showQuiz ? "lg:max-w-md lg:border-r lg:pr-6" : ""}`}>
++            <DialogHeader>
++              <div className="flex flex-wrap items-center gap-2">
++                <span
++                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]"
++                  style={{ borderColor: meta.color, color: meta.color }}
++                >
++                  {meta.emoji} {t(`category_${cat}` as never)}
++                </span>
++              </div>
++              <DialogTitle className="pr-8 text-2xl font-semibold tracking-tight">{name}</DialogTitle>
++              <DialogDescription className="flex flex-wrap items-center gap-3 pt-1 text-sm">
++                <span className="flex items-center gap-1">
++                  <Landmark className="h-3.5 w-3.5" /> {origin || t("museum")}
++                </span>
++                {era && <span className="tabular-nums font-medium text-foreground">{era}</span>}
++              </DialogDescription>
++            </DialogHeader>
+
+-        {/* Gallery */}
+-        {total > 0 ? (
+-          <div className="space-y-2">
+-            <Carousel setApi={setApi} opts={{ loop: true }} className="w-full">
+-              <CarouselContent>
+-                {gallery.map((src, i) => (
+-                  <CarouselItem key={`${src}-${i}`}>
+-                    <button
+-                      type="button"
+-                      onClick={() => setLightbox(src)}
+-                      aria-label={`${name} – ${t("inspect_image")}`}
+-                      className="group grid aspect-[16/10] w-full cursor-zoom-in place-items-center overflow-hidden rounded-xl transition-transform hover:scale-[1.01]"
+-                      style={{ background: meta.bg }}
++            {/* Gallery */}
++            {total > 0 ? (
++              <div className="space-y-2">
++                <Carousel setApi={setApi} opts={{ loop: true }} className="w-full">
++                  <CarouselContent>
++                    {gallery.map((src, i) => (
++                      <CarouselItem key={`${src}-${i}`}>
++                        <button
++                          type="button"
++                          onClick={() => setLightbox(src)}
++                          aria-label={`${name} – ${t("inspect_image")}`}
++                          className="group grid aspect-[16/10] w-full cursor-zoom-in place-items-center overflow-hidden rounded-xl transition-transform hover:scale-[1.01]"
++                          style={{ background: meta.bg }}
++                        >
++                          <img
++                            src={src}
++                            alt={`${name} – ${i + 1}`}
++                            className="h-full w-full object-contain p-6 drop-shadow-xl transition-transform group-hover:scale-[1.02]"
++                            loading="lazy"
++                          />
++                        </button>
++                      </CarouselItem>
++                    ))}
++                  </CarouselContent>
++                  {total > 1 && (
++                    <>
++                      <CarouselPrevious className="left-2 z-10 bg-background/80 backdrop-blur" />
++                      <CarouselNext className="right-2 z-10 bg-background/80 backdrop-blur" />
++                    </>
++                  )}
++                </Carousel>
++                <div className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
++                  <span className="flex items-center gap-1">
++                    <ImageIcon className="h-3 w-3" />
++                    {name}
++                  </span>
++                  <span>
++                    {index + 1} / {total}
++                  </span>
++                </div>
++              </div>
++            ) : (
++              <div
++                className="grid aspect-[16/10] place-items-center rounded-xl text-6xl opacity-30"
++                style={{ background: meta.bg }}
++              >
++                {meta.emoji}
++              </div>
++            )}
++
++            {/* Specs */}
++            {specs.length > 0 && (
++              <div className="rounded-xl border border-border bg-secondary/30 p-4">
++                <div className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
++                  <FileText className="h-3 w-3" /> {t("visit_summary")}
++                </div>
++                <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
++                  {specs.map((row) => (
++                    <div
++                      key={row.label}
++                      className="flex items-center justify-between gap-3 border-b border-border/40 py-1 last:border-0 sm:border-0 sm:py-0"
                      >
-                       <img
-                         src={src}
-                         alt={`${name} – ${i + 1}`}
--                        className="h-full w-full object-contain p-6 drop-shadow-xl"
-+                        className="h-full w-full object-contain p-6 drop-shadow-xl transition-transform group-hover:scale-[1.02]"
-                         loading="lazy"
-                       />
--                    </div>
-+                    </button>
- 
-                   </CarouselItem>
-                 ))}
-@@ -254,6 +269,31 @@ export function ArtifactModal({ result, onClose }: Props) {
+-                      <img
+-                        src={src}
+-                        alt={`${name} – ${i + 1}`}
+-                        className="h-full w-full object-contain p-6 drop-shadow-xl transition-transform group-hover:scale-[1.02]"
+-                        loading="lazy"
+-                      />
+-                    </button>
+-                  </CarouselItem>
+-                ))}
+-              </CarouselContent>
+-              {total > 1 && (
+-                <>
+-                  <CarouselPrevious className="left-2 z-10 bg-background/80 backdrop-blur" />
+-                  <CarouselNext className="right-2 z-10 bg-background/80 backdrop-blur" />
+-                </>
+-              )}
+-            </Carousel>
+-            <div className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+-              <span className="flex items-center gap-1">
+-                <ImageIcon className="h-3 w-3" />
+-                {name}
+-              </span>
+-              <span>
+-                {index + 1} / {total}
+-              </span>
+-            </div>
+-          </div>
+-        ) : (
+-          <div
+-            className="grid aspect-[16/10] place-items-center rounded-xl text-6xl opacity-30"
+-            style={{ background: meta.bg }}
+-          >
+-            {meta.emoji}
+-          </div>
+-        )}
++                      <dt className="flex items-center gap-1.5 text-muted-foreground">
++                        {row.icon}
++                        <span>{row.label}</span>
++                      </dt>
++                      <dd className="font-medium text-foreground">{row.value}</dd>
++                    </div>
++                  ))}
++                </dl>
++              </div>
++            )}
+
+-        {/* Specs */}
+-        {specs.length > 0 && (
+-          <div className="rounded-xl border border-border bg-secondary/30 p-4">
+-            <div className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+-              <FileText className="h-3 w-3" /> {t("visit_summary")}
++            {/* Story / description */}
++            <div className="rounded-xl border border-border bg-accent/30 p-4">
++              <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
++                <Sparkles className="h-3 w-3" /> {name}
++              </div>
++              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{desc}</p>
+             </div>
+-            <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+-              {specs.map((row) => (
+-                <div
+-                  key={row.label}
+-                  className="flex items-center justify-between gap-3 border-b border-border/40 py-1 last:border-0 sm:border-0 sm:py-0"
+-                >
+-                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+-                    {row.icon}
+-                    <span>{row.label}</span>
+-                  </dt>
+-                  <dd className="font-medium text-foreground">{row.value}</dd>
++
++            {/* Reward strip */}
++            <div className="rounded-xl border-2 border-border bg-card/30 p-4">
++              <div className="space-y-2">
++                <div className="flex items-center justify-between">
++                  <p
++                    className={`font-display text-3xl ${
++                      localResult.expGained < 0 ? "text-destructive" : "text-primary"
++                    }`}
++                  >
++                    {localResult.expGained >= 0 ? "+" : ""}
++                    {localResult.expGained} EXP {localResult.expGained >= 0 ? "✨" : "💥"}
++                  </p>
++                  <p className="text-xs text-muted-foreground">
++                    {t("total_exp")}: <span className="font-display text-ink">{localResult.totalExp}</span>
++                  </p>
+                 </div>
+-              ))}
+-            </dl>
+-          </div>
+-        )}
++                {uq?.kind === "activeCorrect" && (
++                  <p className="flex items-center gap-2 text-sm text-jungle">
++                    <Sparkles className="size-4" /> {t("uq_correct_bonus")} · {uq.correctScans}/
++                    {uq.targetCount}
++                  </p>
++                )}
++                {uq?.kind === "activeCorrectComplete" && (
++                  <p className="flex items-center gap-2 text-sm text-jungle">
++                    <Flag className="size-4" /> {t("quest_done")}!
++                  </p>
++                )}
++                {uq?.kind === "activeWrongFail" && (
++                  <p className="flex items-center gap-2 text-sm text-destructive">
++                    <AlertTriangle className="size-4" /> {t("uq_wrong_penalty")}
++                  </p>
++                )}
++                {localResult.levelUps > 0 && (
++                  <p className="flex items-center gap-2 text-sm">
++                    <TrendingUp className="size-4 text-gold" /> {t("level_up")} → Lv. {localResult.level}{" "}
++                    (+{localResult.pointsGained} {t("points")})
++                  </p>
++                )}
++                {localResult.newBadges.length > 0 && (
++                  <p className="flex items-center gap-2 text-sm">
++                    <Award className="size-4 text-primary" /> {t("new_badge")}:{" "}
++                    {localResult.newBadges.length}
++                  </p>
++                )}
++                {localResult.newAchievements.length > 0 && (
++                  <p className="flex items-center gap-2 text-sm">
++                    <Sparkles className="size-4 text-indigo" /> {t("new_achievement")}:{" "}
++                    {localResult.newAchievements.length}
++                  </p>
++                )}
++              </div>
++            </div>
+
+-        {/* Story / description */}
+-        <div className="rounded-xl border border-border bg-accent/30 p-4">
+-          <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+-            <Sparkles className="h-3 w-3" /> {name}
++            {/* Quiz Button Section */}
++            {!showQuiz && (
++              <div className="pt-2">
++                {quizDone ? (
++                  <button
++                    type="button"
++                    onClick={handleLockedQuizClick}
++                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 px-6 py-4 text-sm font-bold text-muted-foreground transition-all"
++                  >
++                    <HelpCircle className="size-5" />
++                    {t("quiz_answered")}
++                  </button>
++                ) : (
++                  <button
++                    type="button"
++                    onClick={() => {
++                      setShowQuiz(true);
++                      sfx.pop();
++                    }}
++                    className="flex w-full bounce-soft items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90"
++                  >
++                    <HelpCircle className="size-5" />
++                    {t("quiz_cta")}
++                  </button>
++                )}
++              </div>
++            )}
+           </div>
+-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{desc}</p>
+-        </div>
+
+-        {/* Reward strip */}
+-        <div className="rounded-xl border-2 border-border bg-card/30 p-4">
+-          {result.alreadyScanned ? (
+-            <p className="text-sm text-muted-foreground">{t("already_claimed")}</p>
+-          ) : (
+-            <div className="space-y-2">
+-              <div className="flex items-center justify-between">
+-                <p
+-                  className={`font-display text-3xl ${
+-                    result.expGained < 0 ? "text-destructive" : "text-primary"
+-                  }`}
++          {/* Quiz Panel (Right Side) */}
++          {showQuiz && (
++            <div className="flex-1 animate-in fade-in slide-in-from-right-8 duration-500 lg:min-h-[500px]">
++              <div className="sticky top-0 h-full">
++                <ArtifactQuizSection
++                  artifact={a}
++                  alreadyCompleted={quizDone}
++                  completion={localResult.quizCorrectCount !== null ? localResult : null}
++                  onCompleted={(res) => {
++                    setLocalResult(res);
++                  }}
++                />
++                <button
++                  type="button"
++                  onClick={() => setShowQuiz(false)}
++                  className="mt-4 flex w-full items-center justify-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                 >
+-                  {result.expGained >= 0 ? "+" : ""}
+-                  {result.expGained} EXP {result.expGained >= 0 ? "✨" : "💥"}
+-                </p>
+-                <p className="text-xs text-muted-foreground">
+-                  {t("total_exp")}: <span className="font-display text-ink">{result.totalExp}</span>
+-                </p>
++                  <ArrowLeft className="size-3" /> {t("back")}
++                </button>
+               </div>
+-              {uq?.kind === "activeCorrect" && (
+-                <p className="flex items-center gap-2 text-sm text-jungle">
+-                  <Sparkles className="size-4" /> {t("uq_correct_bonus")} · {uq.correctScans}/
+-                  {uq.targetCount}
+-                </p>
+-              )}
+-              {uq?.kind === "activeCorrectComplete" && (
+-                <p className="flex items-center gap-2 text-sm text-jungle">
+-                  <Flag className="size-4" /> {t("quest_done")}!
+-                </p>
+-              )}
+-              {uq?.kind === "activeWrongFail" && (
+-                <p className="flex items-center gap-2 text-sm text-destructive">
+-                  <AlertTriangle className="size-4" /> {t("uq_wrong_penalty")}
+-                </p>
+-              )}
+-              {result.levelUps > 0 && (
+-                <p className="flex items-center gap-2 text-sm">
+-                  <TrendingUp className="size-4 text-gold" /> {t("level_up")} → Lv. {result.level}{" "}
+-                  (+{result.pointsGained} {t("points")})
+-                </p>
+-              )}
+-              {result.newBadges.length > 0 && (
+-                <p className="flex items-center gap-2 text-sm">
+-                  <Award className="size-4 text-primary" /> {t("new_badge")}:{" "}
+-                  {result.newBadges.length}
+-                </p>
+-              )}
+-              {result.newAchievements.length > 0 && (
+-                <p className="flex items-center gap-2 text-sm">
+-                  <Sparkles className="size-4 text-indigo" /> {t("new_achievement")}:{" "}
+-                  {result.newAchievements.length}
+-                </p>
+-              )}
+             </div>
            )}
          </div>
-       </DialogContent>
-+      {lightbox && typeof document !== "undefined" && createPortal(
-+        <div
-+          role="dialog"
-+          aria-modal="true"
-+          aria-label={t("inspect_image")}
-+          onClick={() => setLightbox(null)}
-+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
-+        >
-+          <button
-+            type="button"
-+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
-+            aria-label={t("close")}
-+            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-+          >
-+            <X className="size-5" />
-+          </button>
-+          <img
-+            src={lightbox}
-+            alt={name}
-+            onClick={(e) => e.stopPropagation()}
-+            className="max-h-[92vh] max-w-[95vw] cursor-zoom-out rounded-xl object-contain shadow-2xl"
-+          />
-+        </div>,
-+        document.body,
-+      )}
-     </Dialog>
+diff --git a/src/components/ArtifactQuizSection.tsx b/src/components/ArtifactQuizSection.tsx
+index 0cfe906..03a8025 100644
+--- a/src/components/ArtifactQuizSection.tsx
++++ b/src/components/ArtifactQuizSection.tsx
+@@ -80,7 +80,8 @@ export function ArtifactQuizSection({ artifact, alreadyCompleted, completion, on
+
+       await qc.invalidateQueries();
+
+-      if (result.alreadyScanned) {
++      if (result.alreadyScanned && result.quizCorrectCount === null) {
++        // This shouldn't happen with the new server logic but safety first
+         setLockedByServer(true);
+         sfx.error();
+       } else {
+@@ -96,104 +97,88 @@ export function ArtifactQuizSection({ artifact, alreadyCompleted, completion, on
+   }
+
+   if (finalCompletion) {
++    const score = finalCompletion.quizCorrectCount ?? 0;
++    const total = finalCompletion.quizTotalQuestions ?? 3;
++    const isPerfect = score === total;
++
+     return (
+-      <section className="rounded-2xl border-2 border-border bg-card/40 p-4">
+-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
+-          <Sparkles className="size-4" />
+-          {t("quiz_result_title")}
+-        </div>
+-        <div className="space-y-2 text-sm">
+-          <p>
+-            {t("quiz_score")}:{" "}
+-            <span className="font-display text-lg text-ink">
+-              {finalCompletion.quizCorrectCount}/{finalCompletion.quizTotalQuestions}
+-            </span>
++      <section className="animate-in zoom-in-95 rounded-[24px] border-2 border-primary/20 bg-gradient-to-b from-card to-accent/20 p-6 shadow-xl duration-500">
++        <div className="mb-6 flex flex-col items-center text-center">
++          <div className="relative mb-4">
++            <div className={`absolute inset-0 animate-ping rounded-full opacity-20 ${isPerfect ? "bg-gold" : "bg-primary"}`} />
++            <div className={`relative flex size-20 items-center justify-center rounded-full shadow-lg ${isPerfect ? "bg-gold text-white" : "bg-primary text-primary-foreground"}`}>
++              {isPerfect ? <Sparkles className="size-10" /> : <CheckCircle2 className="size-10" />}
++            </div>
++          </div>
++          <h3 className="font-display text-2xl text-ink">
++            {isPerfect ? "Luar Biasa!" : t("quiz_result_title")}
++          </h3>
++          <p className="text-sm text-muted-foreground">
++            {isPerfect ? "Anda pakar warisan!" : "Bagus! Teruskan belajar."}
+           </p>
+-          <p>
+-            {t("quiz_exp_awarded")}:{" "}
+-            <span className="font-display text-lg text-primary">{finalCompletion.expGained} EXP</span>
+-          </p>
+-          {finalCompletion.levelUps > 0 && (
+-            <p className="text-muted-foreground">
+-              {t("level_up")} → Lv. {finalCompletion.level} (+{finalCompletion.pointsGained} {t("points")})
+-            </p>
+-          )}
+-          {finalCompletion.newQuests.length > 0 && (
+-            <p className="text-muted-foreground">
+-              {t("quest_done")}: {finalCompletion.newQuests.length}
++        </div>
++
++        <div className="grid grid-cols-2 gap-4">
++          <div className="rounded-2xl border border-border bg-card p-4 text-center">
++            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("quiz_score")}</p>
++            <p className="font-display text-3xl text-ink">
++              {score}<span className="text-muted-foreground/40">/{total}</span>
+             </p>
++          </div>
++          <div className="rounded-2xl border border-border bg-card p-4 text-center">
++            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("exp_gained")}</p>
++            <p className="font-display text-3xl text-primary">+{finalCompletion.expGained}</p>
++          </div>
++        </div>
++
++        <div className="mt-6 space-y-3">
++          {finalCompletion.levelUps > 0 && (
++            <div className="flex items-center gap-3 rounded-xl bg-gold/10 p-3 text-sm font-medium text-amber-700">
++              <TrendingUp className="size-5" />
++              <span>{t("level_up")} → Lv. {finalCompletion.level}</span>
++            </div>
+           )}
+           {finalCompletion.newBadges.length > 0 && (
+-            <p className="text-muted-foreground">
+-              {t("new_badge")}: {finalCompletion.newBadges.length}
+-            </p>
++            <div className="flex items-center gap-3 rounded-xl bg-primary/10 p-3 text-sm font-medium text-primary">
++              <Award className="size-5" />
++              <span>{t("new_badge")} Diperoleh!</span>
++            </div>
+           )}
+         </div>
+       </section>
+     );
+   }
+
+-  if (isLocked && !started) {
+-    return (
+-      <section className="rounded-2xl border-2 border-border bg-muted/50 p-4">
+-        <button
+-          type="button"
+-          aria-disabled="true"
+-          onClick={handleLockedClick}
+-          className="w-full rounded-full border-2 border-border bg-muted px-5 py-3 text-sm font-semibold text-muted-foreground opacity-80"
+-        >
+-          {t("quiz_answered")}
+-        </button>
+-        <p className="mt-2 text-xs text-muted-foreground">{t("quiz_locked_hint")}</p>
+-      </section>
+-    );
+-  }
+-
+-  if (!started) {
+-    return (
+-      <section className="rounded-2xl border-2 border-border bg-card/40 p-4">
+-        <button
+-          type="button"
+-          onClick={() => {
+-            setStarted(true);
+-            sfx.pop();
+-          }}
+-          className="w-full rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-md"
+-        >
+-          {t("quiz_cta")}
+-        </button>
+-      </section>
+-    );
+-  }
+-
+   return (
+-    <section className="rounded-2xl border-2 border-border bg-card/40 p-4">
+-      <div className="mb-3 flex items-center justify-between gap-3">
+-        <div className="flex items-center gap-2 text-sm font-semibold text-primary">
++    <section className="animate-in slide-in-from-right-4 h-full rounded-[24px] border-2 border-border bg-card/60 p-6 shadow-sm duration-300">
++      <div className="mb-6 flex items-center justify-between gap-3">
++        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-primary">
+           <HelpCircle className="size-4" />
+           {t("quiz_title")}
+         </div>
+-        <span className="text-xs text-muted-foreground">
+-          {t("quiz_progress")} {currentIndex + 1}/{questions.length}
+-        </span>
++        <div className="rounded-full bg-muted px-3 py-1 text-[10px] font-bold text-muted-foreground">
++          {currentIndex + 1} / {questions.length}
++        </div>
+       </div>
+
+-      <p className="mb-4 text-sm font-medium leading-relaxed">
+-        {lang === "bm" ? currentQuestion.prompt.bm : currentQuestion.prompt.en}
+-      </p>
++      <div className="mb-8 min-h-[4.5rem]">
++        <p className="text-lg font-semibold leading-snug text-ink">
++          {lang === "bm" ? currentQuestion.prompt.bm : currentQuestion.prompt.en}
++        </p>
++      </div>
+
+-      <div className="space-y-2">
++      <div className="space-y-3">
+         {currentQuestion.options.map((option, index) => {
+           const isCorrect = index === currentQuestion.correctIndex;
+           const isSelected = index === selectedIndex;
+           const showState = selectedIndex !== null;
+           const stateClass = showState
+             ? isCorrect
+-              ? "border-primary bg-primary/10 text-ink"
++              ? "border-primary bg-primary/10 text-ink ring-2 ring-primary/20"
+               : isSelected
+-                ? "border-destructive bg-destructive/10 text-destructive"
+-                : "border-border bg-card text-muted-foreground"
+-            : "border-border bg-card hover:border-primary hover:bg-primary/5";
++                ? "border-destructive bg-destructive/10 text-destructive ring-2 ring-destructive/20"
++                : "border-border bg-card/40 text-muted-foreground opacity-60"
++            : "border-border bg-card hover:border-primary hover:bg-primary/5 hover:shadow-md";
+
+           return (
+             <button
+@@ -201,31 +186,34 @@ export function ArtifactQuizSection({ artifact, alreadyCompleted, completion, on
+               type="button"
+               disabled={selectedIndex !== null || submitting}
+               onClick={() => handleAnswer(index)}
+-              className={`flex w-full items-center justify-between rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${stateClass} disabled:cursor-default`}
++              className={`flex w-full items-center justify-between rounded-2xl border-2 px-5 py-4 text-left text-sm font-medium transition-all duration-200 ${stateClass} disabled:cursor-default`}
+             >
+               <span>{lang === "bm" ? option.bm : option.en}</span>
+-              {showState && isCorrect && <CheckCircle2 className="size-4 shrink-0 text-primary" />}
+-              {showState && isSelected && !isCorrect && <XCircle className="size-4 shrink-0 text-destructive" />}
++              {showState && isCorrect && <CheckCircle2 className="size-5 shrink-0 text-primary" />}
++              {showState && isSelected && !isCorrect && <XCircle className="size-5 shrink-0 text-destructive" />}
+             </button>
+           );
+         })}
+       </div>
+
+       {selectedIndex !== null && (
+-        <div className="mt-4 space-y-3">
+-          <p
+-            className={`text-sm font-medium ${selectedIndex === currentQuestion.correctIndex ? "text-primary" : "text-destructive"}`}
+-          >
+-            {selectedIndex === currentQuestion.correctIndex ? t("quiz_correct") : t("quiz_wrong")}
+-          </p>
++        <div className="mt-8 flex animate-in fade-in slide-in-from-bottom-2 flex-col gap-4 duration-300">
++          <div className="flex items-center gap-2">
++            <div className={`h-1.5 flex-1 rounded-full bg-muted overflow-hidden`}>
++              <div
++                className={`h-full transition-all duration-500 ${selectedIndex === currentQuestion.correctIndex ? "bg-primary" : "bg-destructive"}`}
++                style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
++              />
++            </div>
++          </div>
+           <button
+             type="button"
+             onClick={handleNext}
+             disabled={submitting}
+-            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
++            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 font-bold text-white shadow-lg transition-all hover:bg-ink/90 active:scale-95 disabled:opacity-60"
+           >
+             {submitting
+-              ? "…"
++              ? "..."
+               : currentIndex === questions.length - 1
+                 ? t("quiz_finish")
+                 : t("quiz_next")}
+@@ -233,10 +221,7 @@ export function ArtifactQuizSection({ artifact, alreadyCompleted, completion, on
+         </div>
+       )}
+
+-      {submitError && <p className="mt-3 text-xs text-destructive">{submitError}</p>}
+-      <p className="mt-3 text-xs text-muted-foreground">
+-        {t("quiz_score")}: {correctCount}/{questions.length}
+-      </p>
++      {submitError && <p className="mt-4 text-center text-xs font-medium text-destructive">{submitError}</p>}
+     </section>
    );
  }
+diff --git a/src/integrations/supabase/types.ts b/src/integrations/supabase/types.ts
+index 7320e57..417e414 100644
+--- a/src/integrations/supabase/types.ts
++++ b/src/integrations/supabase/types.ts
+@@ -339,18 +339,27 @@ export type Database = {
+         Row: {
+           artifact_id: string
+           exp_earned: number
++          quiz_completed_at: string | null
++          quiz_correct_count: number | null
++          quiz_total_questions: number | null
+           scanned_at: string
+           user_id: string
+         }
+         Insert: {
+           artifact_id: string
+           exp_earned?: number
++          quiz_completed_at?: string | null
++          quiz_correct_count?: number | null
++          quiz_total_questions?: number | null
+           scanned_at?: string
+           user_id: string
+         }
+         Update: {
+           artifact_id?: string
+           exp_earned?: number
++          quiz_completed_at?: string | null
++          quiz_correct_count?: number | null
++          quiz_total_questions?: number | null
+           scanned_at?: string
+           user_id?: string
+         }
 diff --git a/src/lib/i18n.tsx b/src/lib/i18n.tsx
-index 011693a..323dd8e 100644
+index 323dd8e..df17502 100644
 --- a/src/lib/i18n.tsx
 +++ b/src/lib/i18n.tsx
-@@ -43,6 +43,7 @@ const STRINGS = {
+@@ -36,8 +36,21 @@ const STRINGS = {
+   category_toys: { bm: "Mainan Tradisional", en: "Traditional Toys" },
+   scanned: { bm: "Sudah dikesan", en: "Discovered" },
+   unscanned: { bm: "Belum dikesan", en: "Not yet discovered" },
+-  claim_exp: { bm: "Tuntut +30 EXP", en: "Claim +30 EXP" },
++  claim_exp: { bm: "Tuntut +10 EXP", en: "Claim +10 EXP" },
+   already_claimed: { bm: "Sudah dituntut", en: "Already claimed" },
++  quiz_cta: { bm: "Ambil Kuiz", en: "Take Quiz" },
++  quiz_answered: { bm: "Kuiz Selesai", en: "Quiz Answered" },
++  quiz_locked_hint: { bm: "Kuiz ini telah dijawab dan tidak boleh diulang.", en: "This quiz has already been answered and cannot be retaken." },
++  quiz_title: { bm: "Kuiz Pengetahuan", en: "Knowledge Check" },
++  quiz_progress: { bm: "Soalan", en: "Question" },
++  quiz_correct: { bm: "Betul!", en: "Correct!" },
++  quiz_wrong: { bm: "Salah!", en: "Wrong!" },
++  quiz_finish: { bm: "Selesai", en: "Finish" },
++  quiz_next: { bm: "Seterusnya", en: "Next" },
++  quiz_score: { bm: "Skor", en: "Score" },
++  quiz_result_title: { bm: "Keputusan Kuiz", en: "Quiz Result" },
++  quiz_exp_awarded: { bm: "EXP Diperoleh", en: "EXP Awarded" },
++  quiz_submit_error: { bm: "Gagal menghantar keputusan.", en: "Failed to submit result." },
+   era: { bm: "Era", en: "Era" },
+   origin: { bm: "Asal", en: "Origin" },
    material: { bm: "Bahan", en: "Material" },
-   back: { bm: "Kembali", en: "Back" },
-   close: { bm: "Tutup", en: "Close" },
-+  inspect_image: { bm: "Lihat gambar penuh", en: "Inspect image" },
-   redeem: { bm: "Tebus", en: "Redeem" },
-   redeemed: { bm: "Berjaya ditebus!", en: "Redeemed!" },
-   insufficient: { bm: "Mata tidak mencukupi", en: "Not enough points" },
+diff --git a/src/lib/museum.functions.ts b/src/lib/museum.functions.ts
+index 82d5d11..cc6cced 100644
+--- a/src/lib/museum.functions.ts
++++ b/src/lib/museum.functions.ts
+@@ -16,6 +16,8 @@ export interface ScanResult {
+   newBadges: string[];
+   newQuests: string[];
+   newAchievements: string[];
++  quizCorrectCount: number | null;
++  quizTotalQuestions: number | null;
+   uniqueQuest: null | {
+     kind: "activeCorrect" | "activeCorrectComplete" | "activeWrongFail";
+     templateId: string;
+@@ -55,7 +57,10 @@ export interface ScanResult {
+
+ // ---------- scanArtifact ----------
+
+-const scanInput = z.object({ artifactId: z.string().min(1) });
++const scanInput = z.object({
++  artifactId: z.string().min(1),
++  correctCount: z.number().min(0).max(10).optional()
++});
+
+ export const scanArtifact = createServerFn({ method: "POST" })
+   .middleware([requireSupabaseAuth])
+@@ -81,7 +86,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
+       { data: userUq },
+     ] = await Promise.all([
+       supabase.from("user_progress").select("*").eq("user_id", userId).maybeSingle(),
+-      supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", userId),
++      supabase.from("user_artifact_progress").select("*").eq("user_id", userId).eq("artifact_id", data.artifactId).maybeSingle(),
+       supabase.from("user_badges").select("badge_id").eq("user_id", userId),
+       supabase.from("user_quests").select("quest_id").eq("user_id", userId),
+       supabase.from("user_achievements").select("achievement_id").eq("user_id", userId),
+@@ -89,14 +94,14 @@ export const scanArtifact = createServerFn({ method: "POST" })
+       supabase.from("user_unique_quests").select("*").eq("user_id", userId),
+     ]);
+
+-    const scannedIds = new Set((prior ?? []).map((r) => r.artifact_id));
+-    const alreadyScanned = scannedIds.has(artifact.id);
++    const alreadyScanned = !!prior;
++    const quizDone = prior?.quiz_correct_count !== null && prior?.quiz_correct_count !== undefined;
+     const oldExp = prog?.total_exp ?? 0;
+     const oldLevel = prog?.current_level ?? 1;
+     const oldPoints = prog?.discount_points ?? 0;
+
+-    // Idempotent short circuit.
+-    if (alreadyScanned) {
++    // Idempotent short circuit if BOTH scan and quiz are done.
++    if (alreadyScanned && (quizDone || data.correctCount === undefined)) {
+       return {
+         alreadyScanned: true,
+         expGained: 0,
+@@ -108,26 +113,37 @@ export const scanArtifact = createServerFn({ method: "POST" })
+         newBadges: [],
+         newQuests: [],
+         newAchievements: [],
++        quizCorrectCount: prior?.quiz_correct_count ?? null,
++        quizTotalQuestions: prior?.quiz_total_questions ?? null,
+         uniqueQuest: null,
+         offeredUniqueQuest: null,
+         artifact,
+       };
+     }
+
+-    // --- Active unique quest branch ---
+-    const activeUq = (userUq ?? []).find((u) => u.status === "active");
+-    const activeTemplate = activeUq ? (uqTemplatesAll ?? []).find((t) => t.id === activeUq.template_id) : null;
++    // Determine EXP.
++    // If it's a first-time scan: 10 EXP.
++    // If it's a first-time quiz: 10 EXP per correct answer (max 30).
++    let expEarned = 0;
++    if (!alreadyScanned) expEarned += 10; // Discovery bonus
++    if (data.correctCount !== undefined && !quizDone) {
++      expEarned += data.correctCount * 10;
++    }
+
+-    let expEarned = EXP_PER_SCAN;
+     const newBadges: string[] = [];
+     const newAchievements: string[] = [];
+     let uqSummary: ScanResult["uniqueQuest"] = null;
+
++    // --- Active unique quest branch ---
++    // (Kept as is, but using expEarned)
++    const activeUq = (userUq ?? []).find((u) => u.status === "active");
++    const activeTemplate = activeUq ? (uqTemplatesAll ?? []).find((t) => t.id === activeUq.template_id) : null;
++
+     if (activeUq && activeTemplate) {
+       if (artifact.category === activeTemplate.target_category && artifact.id !== activeTemplate.trigger_artifact_id) {
+         // Correct
+-        const bonus = EXP_PER_SCAN * activeTemplate.reward_multiplier;
+-        expEarned = bonus;
++        const bonus = 10 * activeTemplate.reward_multiplier; // Use 10 as base for UQ bonus
++        expEarned += bonus;
+         const nextCorrect = (activeUq.correct_scans ?? 0) + 1;
+         const complete = nextCorrect >= activeTemplate.target_count;
+         await supabase.from("user_unique_quests").update({
+@@ -145,7 +161,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
+         };
+       } else if (artifact.id !== activeTemplate.trigger_artifact_id) {
+         // Wrong category — fail
+-        expEarned = -activeTemplate.penalty_exp;
++        expEarned -= activeTemplate.penalty_exp;
+         await supabase.from("user_unique_quests").update({
+           status: "failed",
+           updated_at: new Date().toISOString(),
+@@ -158,15 +174,38 @@ export const scanArtifact = createServerFn({ method: "POST" })
+           penaltyExp: activeTemplate.penalty_exp,
+         };
+       }
+-      // If artifact is the trigger itself while active (shouldn't happen since trigger already scanned), fall through to normal.
+     }
+
+-    // Insert scan record
+-    const { error: insErr } = await supabase
+-      .from("user_artifact_progress")
+-      .insert({ user_id: userId, artifact_id: artifact.id, exp_earned: expEarned });
+-    if (insErr) throw new Error(insErr.message);
+-    scannedIds.add(artifact.id);
++    // Insert or Update scan record
++    if (!alreadyScanned) {
++      const { error: insErr } = await supabase
++        .from("user_artifact_progress")
++        .insert({
++          user_id: userId,
++          artifact_id: artifact.id,
++          exp_earned: expEarned,
++          quiz_correct_count: data.correctCount ?? null,
++          quiz_total_questions: data.correctCount !== undefined ? 3 : null,
++          quiz_completed_at: data.correctCount !== undefined ? new Date().toISOString() : null
++        });
++      if (insErr) throw new Error(insErr.message);
++    } else if (data.correctCount !== undefined && !quizDone) {
++      const { error: updErr } = await supabase
++        .from("user_artifact_progress")
++        .update({
++          exp_earned: (prior.exp_earned ?? 0) + expEarned,
++          quiz_correct_count: data.correctCount,
++          quiz_total_questions: 3,
++          quiz_completed_at: new Date().toISOString()
++        })
++        .eq("user_id", userId)
++        .eq("artifact_id", artifact.id);
++      if (updErr) throw new Error(updErr.message);
++    }
++
++    // Refresh scanned status for quests
++    const { data: currentPrior } = await supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", userId);
++    const scannedIds = new Set((currentPrior ?? []).map((r) => r.artifact_id));
+
+     // --- Category & grand quests (normal) ---
+     const newQuests: string[] = [];
+@@ -267,6 +306,8 @@ export const scanArtifact = createServerFn({ method: "POST" })
+       newBadges: badgesToInsert,
+       newQuests,
+       newAchievements,
++      quizCorrectCount: data.correctCount ?? (prior?.quiz_correct_count ?? null),
++      quizTotalQuestions: data.correctCount !== undefined ? 3 : (prior?.quiz_total_questions ?? null),
+       uniqueQuest: uqSummary,
+       offeredUniqueQuest: offered,
+       artifact,
+diff --git a/src/lib/museum.ts b/src/lib/museum.ts
+index 4de7750..4b52c11 100644
+--- a/src/lib/museum.ts
++++ b/src/lib/museum.ts
+@@ -1,7 +1,7 @@
+ // Shared constants — safe on client & server.
+ export const LEVEL_THRESHOLDS = [0, 100, 250, 450, 650] as const;
+ export const MAX_LEVEL = LEVEL_THRESHOLDS.length; // 5
+-export const EXP_PER_SCAN = 30;
++export const EXP_PER_SCAN = 10;
+ export const POINTS_PER_LEVEL = 5;
+ export const TOTAL_ARTIFACTS = 15;
+
+diff --git a/src/routes/_authenticated/artifact.$id.tsx b/src/routes/_authenticated/artifact.$id.tsx
+index 9a62402..b50862b 100644
+--- a/src/routes/_authenticated/artifact.$id.tsx
++++ b/src/routes/_authenticated/artifact.$id.tsx
+@@ -6,9 +6,9 @@ import { ArrowLeft, Check, Sparkles, Flag, Award, TrendingUp } from "lucide-reac
+ import { supabase } from "@/integrations/supabase/client";
+ import { useI18n } from "@/lib/i18n";
+ import { artifactImageUrl } from "@/lib/artifact-images";
+-import { scanArtifact } from "@/lib/museum.functions";
+-import { EXP_PER_SCAN } from "@/lib/museum";
++import { scanArtifact, type ScanResult } from "@/lib/museum.functions";
+ import { sfx } from "@/lib/sfx";
++import { ArtifactQuizSection } from "@/components/ArtifactQuizSection";
+
+ export const Route = createFileRoute("/_authenticated/artifact/$id")({
+   component: ArtifactPage,
+@@ -19,25 +19,13 @@ async function fetchArtifact(id: string) {
+     supabase.from("artifacts").select("*").eq("id", id).maybeSingle(),
+     supabase
+       .from("user_artifact_progress")
+-      .select("artifact_id, scanned_at, exp_earned")
++      .select("*")
+       .eq("artifact_id", id)
+       .maybeSingle(),
+   ]);
+   return { artifact, mine };
+ }
+
+-interface ScanResult {
+-  alreadyScanned: boolean;
+-  expGained: number;
+-  totalExp: number;
+-  level: number;
+-  levelUps: number;
+-  pointsGained: number;
+-  totalPoints: number;
+-  newBadges: string[];
+-  newQuests: string[];
+-}
+-
+ function ArtifactPage() {
+   const { id } = Route.useParams();
+   const { t, lang } = useI18n();
+@@ -52,7 +40,9 @@ function ArtifactPage() {
+     queryFn: () => fetchArtifact(id),
+   });
+   const artifact = data?.artifact;
+-  const alreadyClaimed = !!data?.mine;
++  const progress = data?.mine;
++  const alreadyClaimed = !!progress;
++  const quizDone = progress?.quiz_correct_count !== null && progress?.quiz_correct_count !== undefined;
+
+   async function claim() {
+     setBusy(true);
+@@ -141,13 +131,32 @@ function ArtifactPage() {
+         </div>
+
+         <div className="border-t border-border bg-accent/40 p-6">
+-          {alreadyClaimed && !result ? (
+-            <div className="flex items-center gap-2 text-sm text-jungle">
+-              <Check className="size-4" />
+-              {t("already_claimed")} · +{data?.mine?.exp_earned ?? EXP_PER_SCAN} EXP
+-            </div>
+-          ) : result ? (
++          {result ? (
+             <RewardSummary result={result} />
++          ) : quizDone ? (
++            <div className="space-y-4">
++              <div className="flex items-center gap-2 text-sm text-jungle">
++                <Check className="size-4" />
++                {t("already_claimed")} · +{progress?.exp_earned} EXP
++              </div>
++              <div className="rounded-2xl border-2 border-primary/20 bg-card p-4">
++                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t("quiz_score")}</p>
++                <p className="font-display text-2xl text-ink">{progress?.quiz_correct_count}/{progress?.quiz_total_questions}</p>
++              </div>
++            </div>
++          ) : alreadyClaimed ? (
++            <div className="space-y-6">
++              <div className="flex items-center gap-2 text-sm text-jungle">
++                <Check className="size-4" />
++                {t("scanned")} · +{progress?.exp_earned} EXP
++              </div>
++              <ArtifactQuizSection
++                artifact={artifact}
++                alreadyCompleted={false}
++                completion={null}
++                onCompleted={setResult}
++              />
++            </div>
+           ) : (
+             <button
+               onClick={claim}

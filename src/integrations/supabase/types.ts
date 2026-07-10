@@ -339,18 +339,27 @@ export type Database = {
         Row: {
           artifact_id: string
           exp_earned: number
+          quiz_completed_at: string | null
+          quiz_correct_count: number | null
+          quiz_total_questions: number | null
           scanned_at: string
           user_id: string
         }
         Insert: {
           artifact_id: string
           exp_earned?: number
+          quiz_completed_at?: string | null
+          quiz_correct_count?: number | null
+          quiz_total_questions?: number | null
           scanned_at?: string
           user_id: string
         }
         Update: {
           artifact_id?: string
           exp_earned?: number
+          quiz_completed_at?: string | null
+          quiz_correct_count?: number | null
+          quiz_total_questions?: number | null
           scanned_at?: string
           user_id?: string
         }

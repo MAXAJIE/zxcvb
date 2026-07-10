@@ -1,7 +1,7 @@
 // Shared constants — safe on client & server.
 export const LEVEL_THRESHOLDS = [0, 100, 250, 450, 650] as const;
 export const MAX_LEVEL = LEVEL_THRESHOLDS.length; // 5
-export const EXP_PER_SCAN = 30;
+export const EXP_PER_SCAN = 10;
 export const POINTS_PER_LEVEL = 5;
 export const TOTAL_ARTIFACTS = 15;
 

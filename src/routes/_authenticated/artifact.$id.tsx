@@ -6,9 +6,9 @@ import { ArrowLeft, Check, Sparkles, Flag, Award, TrendingUp } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
-import { scanArtifact } from "@/lib/museum.functions";
-import { EXP_PER_SCAN } from "@/lib/museum";
+import { scanArtifact, type ScanResult } from "@/lib/museum.functions";
 import { sfx } from "@/lib/sfx";
+import { ArtifactQuizSection } from "@/components/ArtifactQuizSection";
 
 export const Route = createFileRoute("/_authenticated/artifact/$id")({
   component: ArtifactPage,
@@ -19,23 +19,11 @@ async function fetchArtifact(id: string) {
     supabase.from("artifacts").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("user_artifact_progress")
-      .select("artifact_id, scanned_at, exp_earned")
+      .select("*")
       .eq("artifact_id", id)
       .maybeSingle(),
   ]);
   return { artifact, mine };
-}
-
-interface ScanResult {
-  alreadyScanned: boolean;
-  expGained: number;
-  totalExp: number;
-  level: number;
-  levelUps: number;
-  pointsGained: number;
-  totalPoints: number;
-  newBadges: string[];
-  newQuests: string[];
 }
 
 function ArtifactPage() {
@@ -52,7 +40,9 @@ function ArtifactPage() {
     queryFn: () => fetchArtifact(id),
   });
   const artifact = data?.artifact;
-  const alreadyClaimed = !!data?.mine;
+  const progress = data?.mine;
+  const alreadyClaimed = !!progress;
+  const quizDone = progress?.quiz_correct_count !== null && progress?.quiz_correct_count !== undefined;
 
   async function claim() {
     setBusy(true);
@@ -141,13 +131,32 @@ function ArtifactPage() {
         </div>
 
         <div className="border-t border-border bg-accent/40 p-6">
-          {alreadyClaimed && !result ? (
-            <div className="flex items-center gap-2 text-sm text-jungle">
-              <Check className="size-4" />
-              {t("already_claimed")} · +{data?.mine?.exp_earned ?? EXP_PER_SCAN} EXP
-            </div>
-          ) : result ? (
+          {result ? (
             <RewardSummary result={result} />
+          ) : quizDone ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-jungle">
+                <Check className="size-4" />
+                {t("already_claimed")} · +{progress?.exp_earned} EXP
+              </div>
+              <div className="rounded-2xl border-2 border-primary/20 bg-card p-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t("quiz_score")}</p>
+                <p className="font-display text-2xl text-ink">{progress?.quiz_correct_count}/{progress?.quiz_total_questions}</p>
+              </div>
+            </div>
+          ) : alreadyClaimed ? (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-sm text-jungle">
+                <Check className="size-4" />
+                {t("scanned")} · +{progress?.exp_earned} EXP
+              </div>
+              <ArtifactQuizSection 
+                artifact={artifact} 
+                alreadyCompleted={false}
+                completion={null}
+                onCompleted={setResult}
+              />
+            </div>
           ) : (
             <button
               onClick={claim}
