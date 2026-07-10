@@ -3,7 +3,7 @@ export const LEVEL_THRESHOLDS = [0, 100, 250, 450, 650] as const;
 export const MAX_LEVEL = LEVEL_THRESHOLDS.length; // 5
 export const EXP_PER_SCAN = 30;
 export const POINTS_PER_LEVEL = 5;
-export const TOTAL_ARTIFACTS = 12;
+export const TOTAL_ARTIFACTS = 15;
 
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
@@ -28,38 +28,43 @@ export function expToNextLevel(exp: number): { next: number | null; current: num
   return { next: LEVEL_THRESHOLDS[lvl], current: LEVEL_THRESHOLDS[lvl - 1] };
 }
 
-export type CategoryKey = "weapons" | "regalia" | "music" | "crafts";
+export type CategoryKey = "weapons" | "regalia" | "music" | "crafts" | "toys";
 
-export const CATEGORY_ORDER: CategoryKey[] = ["weapons", "regalia", "music", "crafts"];
+export const CATEGORY_ORDER: CategoryKey[] = ["weapons", "regalia", "music", "crafts", "toys"];
 
 export const CATEGORY_META: Record<CategoryKey, { emoji: string; color: string; bg: string }> = {
   weapons: { emoji: "⚔️", color: "oklch(0.55 0.16 25)",  bg: "oklch(0.94 0.06 25)" },
   regalia: { emoji: "👑", color: "oklch(0.6  0.15 60)",  bg: "oklch(0.94 0.07 70)" },
   music:   { emoji: "🎵", color: "oklch(0.55 0.13 265)", bg: "oklch(0.94 0.05 265)" },
   crafts:  { emoji: "🧵", color: "oklch(0.55 0.13 165)", bg: "oklch(0.94 0.06 165)" },
+  toys:    { emoji: "🪀", color: "oklch(0.55 0.15 330)", bg: "oklch(0.94 0.06 330)" },
 };
 
 // Fixed map layout (viewBox 0 0 100 100). Zones are 4 quadrants of the floor.
 export const ZONE_LAYOUT: Record<CategoryKey, { x: number; y: number; w: number; h: number; label_bm: string; label_en: string }> = {
-  weapons: { x: 4,  y: 6,  w: 44, h: 42, label_bm: "Dewan Senjata",     label_en: "Weapons Hall"  },
-  regalia: { x: 52, y: 6,  w: 44, h: 42, label_bm: "Balai Diraja",       label_en: "Royal Gallery" },
-  music:   { x: 4,  y: 52, w: 44, h: 42, label_bm: "Dewan Muzik",        label_en: "Music Hall"    },
-  crafts:  { x: 52, y: 52, w: 44, h: 42, label_bm: "Studio Kraftangan",  label_en: "Crafts Studio" },
+  weapons: { x: 4,  y: 4,  w: 44, h: 26, label_bm: "Dewan Senjata",     label_en: "Weapons Hall"  },
+  regalia: { x: 52, y: 4,  w: 44, h: 26, label_bm: "Balai Diraja",       label_en: "Royal Gallery" },
+  music:   { x: 4,  y: 34, w: 44, h: 26, label_bm: "Dewan Muzik",        label_en: "Music Hall"    },
+  crafts:  { x: 52, y: 34, w: 44, h: 26, label_bm: "Studio Kraftangan",  label_en: "Crafts Studio" },
+  toys:    { x: 4,  y: 64, w: 92, h: 30, label_bm: "Ruang Mainan Tradisional", label_en: "Traditional Toys Corner" },
 };
 
 export const PIN_POSITIONS: Record<string, { x: number; y: number }> = {
-  "keris-panjang":         { x: 14, y: 20 },
-  "meriam-melaka":         { x: 26, y: 36 },
-  "terabai":               { x: 38, y: 20 },
-  "tengkolok":             { x: 62, y: 20 },
-  "baju-kurung-diraja":    { x: 74, y: 36 },
-  "set-perak-diraja":      { x: 86, y: 20 },
-  "gong-gamelan":          { x: 14, y: 66 },
-  "rebana-ubi":            { x: 26, y: 82 },
-  "seruling-tradisional":  { x: 38, y: 66 },
-  "alat-tenun-songket":    { x: 62, y: 66 },
-  "wau-bulan":             { x: 74, y: 82 },
-  "canting-batik":         { x: 86, y: 66 },
+  "keris-panjang":         { x: 14, y: 12 },
+  "meriam-melaka":         { x: 26, y: 24 },
+  "terabai":               { x: 38, y: 12 },
+  "tengkolok":             { x: 62, y: 12 },
+  "baju-kurung-diraja":    { x: 74, y: 24 },
+  "set-perak-diraja":      { x: 86, y: 12 },
+  "gong-gamelan":          { x: 14, y: 42 },
+  "rebana-ubi":            { x: 26, y: 54 },
+  "seruling-tradisional":  { x: 38, y: 42 },
+  "alat-tenun-songket":    { x: 62, y: 42 },
+  "wau-bulan":             { x: 74, y: 54 },
+  "canting-batik":         { x: 86, y: 42 },
+  "congkak":               { x: 20, y: 80 },
+  "diabolo-cina":          { x: 50, y: 80 },
+  "catur-cina":            { x: 80, y: 80 },
 };
 
 // Preset URL template — QR codes only need to contain "{slug}|{SN}"

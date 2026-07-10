@@ -1,0 +1,617 @@
+diff --git a/.env b/.env
+new file mode 100644
+index 0000000..cea30f9
+--- /dev/null
++++ b/.env
+@@ -0,0 +1,6 @@
++SUPABASE_PROJECT_ID="jnitpuicwvuoygovlttf"
++SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuaXRwdWljd3Z1b3lnb3ZsdHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NTc5OTMsImV4cCI6MjA5OTIzMzk5M30.b1RIKjcEq84OKirshLgEoexWQKmadLitBG8mrDMzglk"
++SUPABASE_URL="https://jnitpuicwvuoygovlttf.supabase.co"
++VITE_SUPABASE_PROJECT_ID="jnitpuicwvuoygovlttf"
++VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuaXRwdWljd3Z1b3lnb3ZsdHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NTc5OTMsImV4cCI6MjA5OTIzMzk5M30.b1RIKjcEq84OKirshLgEoexWQKmadLitBG8mrDMzglk"
++VITE_SUPABASE_URL="https://jnitpuicwvuoygovlttf.supabase.co"
+diff --git a/bun.lock b/bun.lock
+index 79d3b3e..fa6d305 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -32,6 +32,7 @@
+         "@radix-ui/react-toggle": "^1.1.10",
+         "@radix-ui/react-toggle-group": "^1.1.11",
+         "@radix-ui/react-tooltip": "^1.2.8",
++        "@supabase/supabase-js": "^2.110.1",
+         "@tailwindcss/vite": "^4.2.1",
+         "@tanstack/react-query": "^5.101.1",
+         "@tanstack/react-router": "^1.170.16",
+@@ -488,6 +489,20 @@
+ 
+     "@standard-schema/utils": ["@standard-schema/utils@0.3.0", "", {}, "sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g=="],
+ 
++    "@supabase/auth-js": ["@supabase/auth-js@2.110.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/auth-js/-/auth-js-2.110.1.tgz", { "dependencies": { "tslib": "2.8.1" } }, "sha512-8EJUoRoqzAYWkieHrLCrGrxs3cBbRB94xK8GzHe0aSLlSa4mt1enYLCiMgLiKJOF8GNYeX6PLTBNef0XAhILgw=="],
++
++    "@supabase/functions-js": ["@supabase/functions-js@2.110.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/functions-js/-/functions-js-2.110.1.tgz", { "dependencies": { "tslib": "2.8.1" } }, "sha512-Pm9HD9Qth6zQO0aOGZ3DxYb6QlCzrkTkP6eUEOvhTlbvcvYRDSCZXIJ5dkDLpqxD+gdrXfWDFOpU9BpRKYjsIQ=="],
++
++    "@supabase/phoenix": ["@supabase/phoenix@0.4.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/phoenix/-/phoenix-0.4.4.tgz", {}, "sha512-Gt0pqoXuIqX/8dvG0OKp/wMCobXNH3klNbUPBNyOfN0YA1IswrM3HyWFMOPk1Jy+BRaIyDPcFx4jLBwHNmlyfQ=="],
++
++    "@supabase/postgrest-js": ["@supabase/postgrest-js@2.110.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/postgrest-js/-/postgrest-js-2.110.1.tgz", { "dependencies": { "tslib": "2.8.1" } }, "sha512-BILNhS40oGlP2bn/VJjh/1hCyrWNMmpGZGcCrPvqd5R3s8gf8Bd5qyKoHZdMwTKynGCuJGjagRXa069abhibMw=="],
++
++    "@supabase/realtime-js": ["@supabase/realtime-js@2.110.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/realtime-js/-/realtime-js-2.110.1.tgz", { "dependencies": { "@supabase/phoenix": "0.4.4", "tslib": "2.8.1" } }, "sha512-JmWCpMoe2iJPNrXIdHqIvf2Mie6NfSuWHS9Ve6YCmLkn1mNl3vrK3a67IukJ5lPjgmAzB+jFagyMz2oSIX+Xnw=="],
++
++    "@supabase/storage-js": ["@supabase/storage-js@2.110.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/storage-js/-/storage-js-2.110.1.tgz", { "dependencies": { "iceberg-js": "^0.8.1", "tslib": "2.8.1" } }, "sha512-UqJGzhFMiIRBe8vT7a6ZtrN2U5YufH4Tk9nyc9KKfa2TUtV11BkSg/v3lyy/c4A8SbekVH3UywTF0s42zpF4zw=="],
++
++    "@supabase/supabase-js": ["@supabase/supabase-js@2.110.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@supabase/supabase-js/-/supabase-js-2.110.1.tgz", { "dependencies": { "@supabase/auth-js": "2.110.1", "@supabase/functions-js": "2.110.1", "@supabase/postgrest-js": "2.110.1", "@supabase/realtime-js": "2.110.1", "@supabase/storage-js": "2.110.1" } }, "sha512-MiJh0THZgyAvTWm91FOLknjH5dYjXRKOdxpuUsyTVZVXIf7FxCShzevIm4KGCubHRU2n25Gyt8PhTXIFzcD9FA=="],
++
+     "@tabby_ai/hijri-converter": ["@tabby_ai/hijri-converter@1.0.5", "", {}, "sha512-r5bClKrcIusDoo049dSL8CawnHR6mRdDwhlQuIgZRNty68q0x8k3Lf1BtPAMxRf/GgnHBnIO4ujd3+GQdLWzxQ=="],
+ 
+     "@tailwindcss/node": ["@tailwindcss/node@4.2.4", "", { "dependencies": { "@jridgewell/remapping": "^2.3.5", "enhanced-resolve": "^5.19.0", "jiti": "^2.6.1", "lightningcss": "1.32.0", "magic-string": "^0.30.21", "source-map-js": "^1.2.1", "tailwindcss": "4.2.4" } }, "sha512-Ai7+yQPxz3ddrDQzFfBKdHEVBg0w3Zl83jnjuwxnZOsnH9pGn93QHQtpU0p/8rYWxvbFZHneni6p1BSLK4DkGA=="],
+@@ -852,6 +867,8 @@
+ 
+     "httpxy": ["httpxy@0.5.3", "", {}, "sha512-SMS9V6Sn7VWaS11lYhoAr0ceoaiolTWf4jYdJn0NJhCdKMu9R2H9Fh0LBDWBHQF6HRLI1PmaePYsjanSpE5PEw=="],
+ 
++    "iceberg-js": ["iceberg-js@0.8.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/iceberg-js/-/iceberg-js-0.8.1.tgz", {}, "sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA=="],
++
+     "ignore": ["ignore@5.3.2", "", {}, "sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g=="],
+ 
+     "import-fresh": ["import-fresh@3.3.1", "", { "dependencies": { "parent-module": "^1.0.0", "resolve-from": "^4.0.0" } }, "sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ=="],
+diff --git a/package.json b/package.json
+index b801187..0a61c47 100644
+--- a/package.json
++++ b/package.json
+@@ -39,6 +39,7 @@
+     "@radix-ui/react-toggle": "^1.1.10",
+     "@radix-ui/react-toggle-group": "^1.1.11",
+     "@radix-ui/react-tooltip": "^1.2.8",
++    "@supabase/supabase-js": "^2.110.1",
+     "@tailwindcss/vite": "^4.2.1",
+     "@tanstack/react-query": "^5.101.1",
+     "@tanstack/react-router": "^1.170.16",
+diff --git a/src/integrations/supabase/auth-attacher.ts b/src/integrations/supabase/auth-attacher.ts
+new file mode 100644
+index 0000000..5bc57b7
+--- /dev/null
++++ b/src/integrations/supabase/auth-attacher.ts
+@@ -0,0 +1,15 @@
++// This file is automatically generated. Do not edit it directly.
++import { createMiddleware } from '@tanstack/react-start'
++import { supabase } from './client'
++
++// Must be registered as a global `functionMiddleware` in `src/start.ts`; otherwise
++// the browser never attaches the bearer token to serverFn RPCs.
++export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
++  async ({ next }) => {
++    const { data } = await supabase.auth.getSession()
++    const token = data.session?.access_token
++    return next({
++      headers: token ? { Authorization: `Bearer ${token}` } : {},
++    })
++  },
++)
+diff --git a/src/integrations/supabase/auth-middleware.ts b/src/integrations/supabase/auth-middleware.ts
+new file mode 100644
+index 0000000..0aefbe6
+--- /dev/null
++++ b/src/integrations/supabase/auth-middleware.ts
+@@ -0,0 +1,109 @@
++// This file is automatically generated. Do not edit it directly.
++import { createMiddleware } from '@tanstack/react-start'
++import { getRequest } from '@tanstack/react-start/server'
++import { createClient } from '@supabase/supabase-js'
++import type { Database } from './types'
++
++
++
++function isNewSupabaseApiKey(value: string): boolean {
++  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
++}
++
++function createSupabaseFetch(supabaseKey: string): typeof fetch {
++  return (input, init) => {
++    const headers = new Headers(
++      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
++    );
++
++    if (init?.headers) {
++      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
++    }
++
++    // New Supabase API keys are opaque strings, not bearer JWTs.
++    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
++      headers.delete('Authorization');
++    }
++
++    headers.set('apikey', supabaseKey);
++    return fetch(input, { ...init, headers });
++  };
++}
++
++export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
++  async ({ next }) => {
++    
++    const SUPABASE_URL = process.env.SUPABASE_URL;
++    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
++
++    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
++      const missing = [
++        ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
++        ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
++      ];
++      const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
++      console.error(`[Supabase] ${message}`);
++      throw new Error(message);
++    }
++    
++    const request = getRequest();
++
++    if (!request?.headers) {
++      throw new Error('Unauthorized: No request headers available');
++    }
++
++    const authHeader = request.headers.get('authorization');
++
++    if (!authHeader) {
++      throw new Error('Unauthorized: No authorization header provided');
++    }
++
++    if (!authHeader.startsWith('Bearer ')) {
++      throw new Error('Unauthorized: Only Bearer tokens are supported');
++    }
++
++    const token = authHeader.replace('Bearer ', '');
++    if (!token) {
++      throw new Error('Unauthorized: No token provided');
++    }
++
++    if (token.split('.').length !== 3) {
++      throw new Error('Unauthorized: Invalid token');
++    }
++
++    const supabase = createClient<Database>(
++      SUPABASE_URL!,
++      SUPABASE_PUBLISHABLE_KEY!,
++      {
++        global: {
++          fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
++          headers: {
++            Authorization: `Bearer ${token}`,
++          },
++        },
++        auth: {
++          storage: undefined,
++          persistSession: false,
++          autoRefreshToken: false,
++        },
++      }
++    );
++
++    const { data, error } = await supabase.auth.getClaims(token);
++    if (error || !data?.claims) {
++      throw new Error('Unauthorized: Invalid token');
++    }
++
++    if (!data.claims.sub) {
++      throw new Error('Unauthorized: No user ID found in token');
++    }
++
++    return next({
++      context: {
++        supabase,
++        userId: data.claims.sub,
++        claims: data.claims,
++      },
++    });
++  },
++);
+diff --git a/src/integrations/supabase/client.server.ts b/src/integrations/supabase/client.server.ts
+new file mode 100644
+index 0000000..30e131b
+--- /dev/null
++++ b/src/integrations/supabase/client.server.ts
+@@ -0,0 +1,69 @@
++// This file is automatically generated. Do not edit it directly.
++// Server-side Supabase client with service role key - bypasses RLS.
++// Use this for admin operations in server functions and server routes only.
++// For user-authenticated queries (with RLS), use the auth middleware instead.
++import { createClient } from '@supabase/supabase-js';
++import type { Database } from './types';
++
++function isNewSupabaseApiKey(value: string): boolean {
++  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
++}
++
++function createSupabaseFetch(supabaseKey: string): typeof fetch {
++  return (input, init) => {
++    const headers = new Headers(
++      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
++    );
++
++    if (init?.headers) {
++      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
++    }
++
++    // New Supabase API keys are opaque strings, not bearer JWTs.
++    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
++      headers.delete('Authorization');
++    }
++
++    headers.set('apikey', supabaseKey);
++    return fetch(input, { ...init, headers });
++  };
++}
++
++function createSupabaseAdminClient() {
++  const SUPABASE_URL = process.env.SUPABASE_URL;
++  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
++
++  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
++    const missing = [
++      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
++      ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
++    ];
++    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
++    console.error(`[Supabase] ${message}`);
++    throw new Error(message);
++  }
++
++  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
++    global: {
++      fetch: createSupabaseFetch(SUPABASE_SERVICE_ROLE_KEY),
++    },
++    auth: {
++      storage: undefined,
++      persistSession: false,
++      autoRefreshToken: false,
++    }
++  });
++}
++
++let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
++
++// Server-side Supabase client with service role - bypasses RLS
++// SECURITY: Only use this for trusted server-side operations, never expose to client code
++// Load inside server handlers: const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
++// Top-level import is safe only in other .server.ts modules - route files and *.functions.ts ship to the client bundle.
++export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
++  get(_, prop, receiver) {
++    if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
++    return Reflect.get(_supabaseAdmin, prop, receiver);
++  },
++});
+diff --git a/src/integrations/supabase/client.ts b/src/integrations/supabase/client.ts
+new file mode 100644
+index 0000000..8bd3a40
+--- /dev/null
++++ b/src/integrations/supabase/client.ts
+@@ -0,0 +1,68 @@
++// This file is automatically generated. Do not edit it directly.
++import { createClient } from '@supabase/supabase-js';
++import type { Database } from './types';
++
++function isNewSupabaseApiKey(value: string): boolean {
++  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
++}
++
++function createSupabaseFetch(supabaseKey: string): typeof fetch {
++  return (input, init) => {
++    const headers = new Headers(
++      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
++    );
++
++    if (init?.headers) {
++      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
++    }
++
++    // New Supabase API keys are opaque strings, not bearer JWTs.
++    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
++      headers.delete('Authorization');
++    }
++
++    headers.set('apikey', supabaseKey);
++    return fetch(input, { ...init, headers });
++  };
++}
++
++
++function createSupabaseClient() {
++  // Use import.meta.env for client-side (Vite build-time replacement)
++  // Fall back to process.env for SSR (server-side rendering)
++  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
++  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
++
++  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
++    const missing = [
++      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
++      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
++    ];
++    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
++    console.error(`[Supabase] ${message}`);
++    throw new Error(message);
++  }
++
++  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
++    global: {
++      fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
++    },
++    auth: {
++      storage: typeof window !== 'undefined' ? localStorage : undefined,
++      persistSession: true,
++      autoRefreshToken: true,
++    }
++  });
++}
++
++let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
++
++// Import the supabase client like this:
++// import { supabase } from "@/integrations/supabase/client";
++export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
++  get(_, prop, receiver) {
++    if (!_supabase) _supabase = createSupabaseClient();
++    return Reflect.get(_supabase, prop, receiver);
++  },
++});
++
+diff --git a/src/integrations/supabase/types.ts b/src/integrations/supabase/types.ts
+new file mode 100644
+index 0000000..ba7e5bb
+--- /dev/null
++++ b/src/integrations/supabase/types.ts
+@@ -0,0 +1,155 @@
++export type Json =
++  | string
++  | number
++  | boolean
++  | null
++  | { [key: string]: Json | undefined }
++  | Json[]
++
++export type Database = {
++  // Allows to automatically instantiate createClient with right options
++  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
++  __InternalSupabase: {
++    PostgrestVersion: "14.5"
++  }
++  public: {
++    Tables: {
++      [_ in never]: never
++    }
++    Views: {
++      [_ in never]: never
++    }
++    Functions: {
++      [_ in never]: never
++    }
++    Enums: {
++      [_ in never]: never
++    }
++    CompositeTypes: {
++      [_ in never]: never
++    }
++  }
++}
++
++type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
++
++type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
++
++export type Tables<
++  DefaultSchemaTableNameOrOptions extends
++    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
++    | { schema: keyof DatabaseWithoutInternals },
++  TableName extends DefaultSchemaTableNameOrOptions extends {
++    schema: keyof DatabaseWithoutInternals
++  }
++    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
++        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
++    : never = never,
++> = DefaultSchemaTableNameOrOptions extends {
++  schema: keyof DatabaseWithoutInternals
++}
++  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
++      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
++      Row: infer R
++    }
++    ? R
++    : never
++  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
++        DefaultSchema["Views"])
++    ? (DefaultSchema["Tables"] &
++        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
++        Row: infer R
++      }
++      ? R
++      : never
++    : never
++
++export type TablesInsert<
++  DefaultSchemaTableNameOrOptions extends
++    | keyof DefaultSchema["Tables"]
++    | { schema: keyof DatabaseWithoutInternals },
++  TableName extends DefaultSchemaTableNameOrOptions extends {
++    schema: keyof DatabaseWithoutInternals
++  }
++    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
++    : never = never,
++> = DefaultSchemaTableNameOrOptions extends {
++  schema: keyof DatabaseWithoutInternals
++}
++  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
++      Insert: infer I
++    }
++    ? I
++    : never
++  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
++    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
++        Insert: infer I
++      }
++      ? I
++      : never
++    : never
++
++export type TablesUpdate<
++  DefaultSchemaTableNameOrOptions extends
++    | keyof DefaultSchema["Tables"]
++    | { schema: keyof DatabaseWithoutInternals },
++  TableName extends DefaultSchemaTableNameOrOptions extends {
++    schema: keyof DatabaseWithoutInternals
++  }
++    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
++    : never = never,
++> = DefaultSchemaTableNameOrOptions extends {
++  schema: keyof DatabaseWithoutInternals
++}
++  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
++      Update: infer U
++    }
++    ? U
++    : never
++  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
++    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
++        Update: infer U
++      }
++      ? U
++      : never
++    : never
++
++export type Enums<
++  DefaultSchemaEnumNameOrOptions extends
++    | keyof DefaultSchema["Enums"]
++    | { schema: keyof DatabaseWithoutInternals },
++  EnumName extends DefaultSchemaEnumNameOrOptions extends {
++    schema: keyof DatabaseWithoutInternals
++  }
++    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
++    : never = never,
++> = DefaultSchemaEnumNameOrOptions extends {
++  schema: keyof DatabaseWithoutInternals
++}
++  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
++  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
++    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
++    : never
++
++export type CompositeTypes<
++  PublicCompositeTypeNameOrOptions extends
++    | keyof DefaultSchema["CompositeTypes"]
++    | { schema: keyof DatabaseWithoutInternals },
++  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
++    schema: keyof DatabaseWithoutInternals
++  }
++    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
++    : never = never,
++> = PublicCompositeTypeNameOrOptions extends {
++  schema: keyof DatabaseWithoutInternals
++}
++  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
++  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
++    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
++    : never
++
++export const Constants = {
++  public: {
++    Enums: {},
++  },
++} as const
+diff --git a/src/routeTree.gen.ts b/src/routeTree.gen.ts
+index 20a48e5..d204c26 100644
+--- a/src/routeTree.gen.ts
++++ b/src/routeTree.gen.ts
+@@ -57,13 +57,3 @@ const rootRouteChildren: RootRouteChildren = {
+ export const routeTree = rootRouteImport
+   ._addFileChildren(rootRouteChildren)
+   ._addFileTypes<FileRouteTypes>()
+-
+-import type { getRouter } from './router.tsx'
+-import type { startInstance } from './start.ts'
+-declare module '@tanstack/react-start' {
+-  interface Register {
+-    ssr: true
+-    router: Awaited<ReturnType<typeof getRouter>>
+-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+-  }
+-}
+diff --git a/src/routes/__root.tsx b/src/routes/__root.tsx
+index 8d8bdc2..32bf54b 100644
+--- a/src/routes/__root.tsx
++++ b/src/routes/__root.tsx
+@@ -77,11 +77,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
+     meta: [
+       { charSet: "utf-8" },
+       { name: "viewport", content: "width=device-width, initial-scale=1" },
+-      { title: "Lovable App" },
+-      { name: "description", content: "Lovable Generated Project" },
++      { title: "Cloud Ready Starter" },
++      { name: "description", content: "A clean TanStack Start project connected to Lovable Cloud." },
+       { name: "author", content: "Lovable" },
+-      { property: "og:title", content: "Lovable App" },
+-      { property: "og:description", content: "Lovable Generated Project" },
++      { property: "og:title", content: "Cloud Ready Starter" },
++      { property: "og:description", content: "A clean TanStack Start project connected to Lovable Cloud." },
+       { property: "og:type", content: "website" },
+       { name: "twitter:card", content: "summary_large_image" },
+       { name: "twitter:site", content: "@Lovable" },
+diff --git a/src/routes/index.tsx b/src/routes/index.tsx
+index bcc1ab7..f974fed 100644
+--- a/src/routes/index.tsx
++++ b/src/routes/index.tsx
+@@ -1,24 +1,21 @@
+ import { createFileRoute } from "@tanstack/react-router";
+ 
+-// No head() here: the home route inherits title/description/og/twitter from
+-// __root.tsx, and ships no og:image so serve-time hosting can inject the
+-// project's social preview (explicit og:image or latest screenshot).
+ export const Route = createFileRoute("/")({
+   component: Index,
+ });
+ 
+-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
+ function Index() {
+   return (
+-    <div
+-      className="flex min-h-screen items-center justify-center"
+-      style={{ backgroundColor: "#fcfbf8" }}
+-    >
+-      <img
+-        data-lovable-blank-page-placeholder="REMOVE_THIS"
+-        src="https://cdn.gpteng.co/blank-app-v1.svg"
+-        alt="Your app will live here!"
+-      />
+-    </div>
++    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
++      <section className="w-full max-w-xl text-center">
++        <p className="text-sm font-medium text-muted-foreground">Lovable Cloud is connected</p>
++        <h1 className="mt-3 text-4xl font-semibold tracking-normal sm:text-5xl">
++          Ready for your next build
++        </h1>
++        <p className="mt-4 text-base leading-7 text-muted-foreground">
++          The starter is set up and ready for database-backed features, authentication, storage, and server-side functions.
++        </p>
++      </section>
++    </main>
+   );
+ }
+diff --git a/src/start.ts b/src/start.ts
+index d6152ee..2086427 100644
+--- a/src/start.ts
++++ b/src/start.ts
+@@ -1,6 +1,7 @@
+ import { createStart, createMiddleware } from "@tanstack/react-start";
+ 
+ import { renderErrorPage } from "./lib/error-page";
++import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+ 
+ const errorMiddleware = createMiddleware().server(async ({ next }) => {
+   try {
+@@ -18,5 +19,6 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
+ });
+ 
+ export const startInstance = createStart(() => ({
++  functionMiddleware: [attachSupabaseAuth],
+   requestMiddleware: [errorMiddleware],
+ }));
+diff --git a/supabase/config.toml b/supabase/config.toml
+new file mode 100644
+index 0000000..ac93583
+--- /dev/null
++++ b/supabase/config.toml
+@@ -0,0 +1 @@
++project_id = "jnitpuicwvuoygovlttf"
+\ No newline at end of file

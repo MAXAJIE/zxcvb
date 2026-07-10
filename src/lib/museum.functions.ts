@@ -208,7 +208,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
     if (!earnedBadgeIds.has("ahli-kuest") && (newQuests.some((q) => q.startsWith("quest-") && q !== "quest-grand") || [...doneQuestIds].some((q) => q.startsWith("quest-") && q !== "quest-grand"))) {
       newBadges.push("ahli-kuest");
     }
-    if (scanCount >= 6 && !earnedBadgeIds.has("separuh-jalan")) newBadges.push("separuh-jalan");
+    if (scanCount >= 8 && !earnedBadgeIds.has("separuh-jalan")) newBadges.push("separuh-jalan");
     if (scanCount === TOTAL_ARTIFACTS && !earnedBadgeIds.has("peneroka-muzium")) newBadges.push("peneroka-muzium");
     // dedupe
     const badgesToInsert = [...new Set(newBadges)].filter((b) => !earnedBadgeIds.has(b));

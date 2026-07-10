@@ -116,31 +116,18 @@ function ProfilePage() {
 
       <section className="game-card p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg">{t("profile_earned_badges")}</h2>
+          <h2 className="font-display text-lg">{t("profile_earned_all")}</h2>
           <Link to="/achievements" className="text-xs text-muted-foreground hover:text-primary">{t("view_all")} →</Link>
         </div>
-        {data.badges.length === 0 ? (
+        {data.badges.length === 0 && data.achievements.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("none_yet")}</p>
         ) : (
           <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
             {data.badges.map((b) => (
-              <BadgeMedallion key={b.id} icon={b.icon || "🏅"} label={lang === "bm" ? b.name_bm : b.name_en} rarity={(b.rarity ?? "common") as Rarity} size="md" />
+              <BadgeMedallion key={`b-${b.id}`} icon={b.icon || "🏅"} label={lang === "bm" ? b.name_bm : b.name_en} rarity={(b.rarity ?? "common") as Rarity} size="md" />
             ))}
-          </div>
-        )}
-      </section>
-
-      <section className="game-card p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg">{t("profile_earned_ach")}</h2>
-          <Link to="/achievements" className="text-xs text-muted-foreground hover:text-primary">{t("view_all")} →</Link>
-        </div>
-        {data.achievements.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("none_yet")}</p>
-        ) : (
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
             {data.achievements.map((a) => (
-              <BadgeMedallion key={a.id} icon={a.icon} label={lang === "bm" ? a.name_bm : a.name_en} rarity={(a.rarity ?? "common") as Rarity} size="md" />
+              <BadgeMedallion key={`a-${a.id}`} icon={a.icon} label={lang === "bm" ? a.name_bm : a.name_en} rarity={(a.rarity ?? "common") as Rarity} size="md" />
             ))}
           </div>
         )}

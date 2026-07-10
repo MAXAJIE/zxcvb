@@ -83,7 +83,7 @@ export function ArtifactModal({ result, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px] border-2 border-border bg-card/50 backdrop-blur-xl">
         <DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
             <span

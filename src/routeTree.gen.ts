@@ -20,7 +20,6 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
-import { Route as AuthenticatedBadgesRouteImport } from './routes/_authenticated/badges'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AuthenticatedArtifactIdRouteImport } from './routes/_authenticated/artifact.$id'
 
@@ -78,11 +77,6 @@ const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBadgesRoute = AuthenticatedBadgesRouteImport.update({
-  id: '/badges',
-  path: '/badges',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedAchievementsRoute =
   AuthenticatedAchievementsRouteImport.update({
     id: '/achievements',
@@ -99,7 +93,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
-  '/badges': typeof AuthenticatedBadgesRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/map': typeof AuthenticatedMapRoute
@@ -114,7 +107,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
-  '/badges': typeof AuthenticatedBadgesRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/map': typeof AuthenticatedMapRoute
@@ -131,7 +123,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
-  '/_authenticated/badges': typeof AuthenticatedBadgesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
@@ -148,7 +139,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/achievements'
-    | '/badges'
     | '/journal'
     | '/journey'
     | '/map'
@@ -163,7 +153,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/achievements'
-    | '/badges'
     | '/journal'
     | '/journey'
     | '/map'
@@ -179,7 +168,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/achievements'
-    | '/_authenticated/badges'
     | '/_authenticated/journal'
     | '/_authenticated/journey'
     | '/_authenticated/map'
@@ -277,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/badges': {
-      id: '/_authenticated/badges'
-      path: '/badges'
-      fullPath: '/badges'
-      preLoaderRoute: typeof AuthenticatedBadgesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/achievements': {
       id: '/_authenticated/achievements'
       path: '/achievements'
@@ -303,7 +284,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
-  AuthenticatedBadgesRoute: typeof AuthenticatedBadgesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
   AuthenticatedMapRoute: typeof AuthenticatedMapRoute
@@ -316,7 +296,6 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
-  AuthenticatedBadgesRoute: AuthenticatedBadgesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
   AuthenticatedMapRoute: AuthenticatedMapRoute,
