@@ -1,0 +1,11 @@
+# HeritageQuest — optional Python-side utilities
+#
+# The web app itself does NOT need Python to run (see README.md).
+# These packages let you prototype backend logic, generate QR codes for
+# the 12 seeded artifacts, or run helper scripts alongside the app.
+
+qrcode[pil]>=7.4          # generate QR PNGs for each artifact id
+Pillow>=10.0              # image handling
+python-dotenv>=1.0        # load .env in Python scripts
+requests>=2.31            # call the Lovable Cloud REST API from Python
+supabase>=2.5             # official Supabase Python client (optional)

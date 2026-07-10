@@ -1,0 +1,201 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * HeritageQuest — cozy pastel + game-y accents.
+ * Soft cream base, blush coral primary, sage mint, dusty periwinkle,
+ * warm peach gold. Chunky rounded borders and playful animations.
+ */
+
+@theme inline {
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Nunito", ui-rounded, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-parchment: var(--parchment);
+  --color-ink: var(--ink);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-indigo: var(--indigo);
+  --color-jungle: var(--jungle);
+  --color-stamp: var(--stamp);
+}
+
+:root {
+  --radius: 1rem;
+
+  --parchment: oklch(0.985 0.012 85);
+  --background: oklch(0.985 0.012 85);
+  --foreground: oklch(0.32 0.03 260);
+  --ink: oklch(0.3 0.035 260);
+
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.74 0.13 25);
+  --primary-foreground: oklch(0.99 0.005 80);
+  --stamp: oklch(0.7 0.15 25);
+
+  --gold: oklch(0.86 0.1 70);
+  --gold-foreground: oklch(0.32 0.05 60);
+  --accent: oklch(0.94 0.04 60);
+  --accent-foreground: oklch(0.35 0.05 60);
+
+  --indigo: oklch(0.7 0.08 265);
+  --secondary: oklch(0.94 0.03 260);
+  --secondary-foreground: oklch(0.35 0.06 265);
+
+  --jungle: oklch(0.72 0.09 165);
+
+  --muted: oklch(0.95 0.015 80);
+  --muted-foreground: oklch(0.55 0.03 260);
+
+  --destructive: oklch(0.68 0.16 25);
+  --destructive-foreground: oklch(0.99 0.005 80);
+
+  --border: oklch(0.92 0.015 80);
+  --input: oklch(0.93 0.015 80);
+  --ring: oklch(0.78 0.12 25);
+}
+
+.dark {
+  --parchment: oklch(0.24 0.02 265);
+  --background: oklch(0.2 0.02 265);
+  --foreground: oklch(0.96 0.01 80);
+  --ink: var(--foreground);
+  --card: oklch(0.26 0.025 265);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.26 0.025 265);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.78 0.13 25);
+  --primary-foreground: oklch(0.2 0.02 265);
+  --gold: oklch(0.85 0.11 70);
+  --accent: oklch(0.3 0.04 260);
+  --accent-foreground: oklch(0.94 0.03 80);
+  --secondary: oklch(0.32 0.04 260);
+  --secondary-foreground: oklch(0.94 0.03 260);
+  --indigo: oklch(0.75 0.1 265);
+  --jungle: oklch(0.78 0.1 165);
+  --muted: oklch(0.28 0.02 265);
+  --muted-foreground: oklch(0.75 0.02 260);
+  --destructive: oklch(0.7 0.16 25);
+  --border: oklch(0.32 0.02 265);
+  --input: oklch(0.32 0.02 265);
+  --ring: oklch(0.78 0.12 25);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    background-image:
+      radial-gradient(circle at 10% 10%, oklch(0.92 0.08 25 / 0.35), transparent 40%),
+      radial-gradient(circle at 90% 20%, oklch(0.9 0.08 165 / 0.3), transparent 45%),
+      radial-gradient(circle at 50% 90%, oklch(0.9 0.08 265 / 0.28), transparent 50%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+}
+
+@utility paper-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.9) inset,
+    0 4px 12px -6px oklch(0.6 0.05 260 / 0.15),
+    0 12px 30px -18px oklch(0.5 0.08 25 / 0.2);
+  transition: transform 200ms cubic-bezier(.34,1.56,.64,1), box-shadow 200ms ease;
+}
+@utility paper-card {
+  &:hover { transform: translateY(-2px); }
+}
+
+/* chunkier game-y card with 2px border and stronger shadow */
+@utility game-card {
+  background-color: var(--color-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 2px 0 var(--color-border),
+    0 4px 0 -2px oklch(0.85 0.06 25 / 0.4),
+    0 14px 30px -18px oklch(0.5 0.08 25 / 0.3);
+  transition: transform 180ms cubic-bezier(.34,1.56,.64,1);
+}
+@utility game-card {
+  &:hover { transform: translateY(-3px); }
+}
+
+@utility chip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-card);
+}
+
+@utility stamp-border {
+  border: 2px dashed var(--color-gold);
+  border-radius: var(--radius-xl);
+}
+
+@utility pop-in     { animation: pop-in 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+@utility float-y    { animation: float-y 4s ease-in-out infinite; }
+@utility wiggle     { animation: wiggle 2.5s ease-in-out infinite; }
+@utility shake      { animation: shake 0.5s ease-in-out; }
+@utility sparkle    { animation: sparkle 1.4s ease-in-out infinite; }
+@utility scanline   { animation: scanline 1.8s linear infinite; }
+@utility bounce-soft { transition: transform 180ms cubic-bezier(.34,1.56,.64,1); }
+@utility bounce-soft {
+  &:hover  { transform: translateY(-2px) scale(1.03); }
+  &:active { transform: translateY(0) scale(0.97); }
+}
+
+@keyframes pop-in     { 0% { opacity: 0; transform: scale(0.9) translateY(6px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes float-y    { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes wiggle     { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes shake      { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes sparkle    { 0%,100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes scanline   { 0% { transform: translateY(0); } 100% { transform: translateY(100%); } }
+
+button, a { transition: transform 180ms cubic-bezier(.34,1.56,.64,1), background-color 180ms ease, opacity 180ms ease; }
