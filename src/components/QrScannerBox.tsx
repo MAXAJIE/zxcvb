@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, CameraOff, KeyRound } from "lucide-react";
+import { Camera, CameraOff, KeyRound, Image as ImageIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { sfx } from "@/lib/sfx";
 import { parseArtifactCode } from "@/lib/museum";
@@ -10,9 +10,11 @@ export function QrScannerBox({ onScan }: Props) {
   const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const scannerRef = useRef<unknown>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState("");
+  const [decoding, setDecoding] = useState(false);
 
   useEffect(() => {
     return () => { stopCamera(); };
@@ -62,6 +64,35 @@ export function QrScannerBox({ onScan }: Props) {
     onScan(id);
   }
 
+  async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Reset input so re-selecting the same file still fires change.
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    setDecoding(true);
+    try {
+      const mod = await import("qr-scanner");
+      const QrScanner = mod.default;
+      // scanImage accepts File/Blob/HTMLImageElement and internally rescales
+      // large sources (1000x1000 and beyond decode reliably) using its
+      // built-in worker + scan-region auto-detection.
+      const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
+      const raw = typeof result === "string" ? result : result.data;
+      const id = parseArtifactCode(raw);
+      if (!id) { setError(t("scan_invalid")); sfx.error(); return; }
+      sfx.scanBeep();
+      onScan(id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || t("scan_invalid"));
+      sfx.error();
+    } finally {
+      setDecoding(false);
+    }
+  }
+
+
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <div className="relative aspect-square w-full overflow-hidden rounded-3xl border-2 border-border bg-card shadow-[0_20px_50px_-24px_oklch(0.5_0.08_25/0.4)]">
@@ -106,6 +137,25 @@ export function QrScannerBox({ onScan }: Props) {
 
       {error && <p className="rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive shake">{error}</p>}
 
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={decoding}
+          className="bounce-soft inline-flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-4 py-2 text-sm font-semibold text-ink shadow-sm disabled:opacity-60"
+        >
+          <ImageIcon className="size-4" />
+          {decoding ? "…" : t("scan_upload")}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onPickImage}
+        />
+      </div>
+
       <form onSubmit={submitManual} className="game-card flex items-center gap-2 p-3">
         <KeyRound className="ml-1 size-4 text-muted-foreground" />
         <input
@@ -117,6 +167,7 @@ export function QrScannerBox({ onScan }: Props) {
         <button type="submit" className="bounce-soft rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground">{t("scan_go")}</button>
       </form>
       <p className="text-center text-xs text-muted-foreground">{t("scan_manual")}</p>
+
     </div>
   );
 }

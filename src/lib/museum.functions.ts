@@ -1,10 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { EXP_PER_SCAN, POINTS_PER_LEVEL, TOTAL_ARTIFACTS, levelForExp } from "@/lib/museum";
+import { levelForExp, POINTS_PER_LEVEL, TOTAL_ARTIFACTS } from "./museum";
 
-// ---------- Types ----------
-
+// Re-using the same result shape so the UI (ArtifactModal, ScanPage)
+// doesn't need to change its data-handling logic.
 export interface ScanResult {
   alreadyScanned: boolean;
   expGained: number;
@@ -16,6 +17,8 @@ export interface ScanResult {
   newBadges: string[];
   newQuests: string[];
   newAchievements: string[];
+  quizCorrectCount: number | null;
+  quizTotalQuestions: number | null;
   uniqueQuest: null | {
     kind: "activeCorrect" | "activeCorrectComplete" | "activeWrongFail";
     templateId: string;
@@ -55,7 +58,10 @@ export interface ScanResult {
 
 // ---------- scanArtifact ----------
 
-const scanInput = z.object({ artifactId: z.string().min(1) });
+const scanInput = z.object({ 
+  artifactId: z.string().min(1),
+  correctCount: z.number().min(0).max(10).optional() 
+});
 
 export const scanArtifact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -81,7 +87,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
       { data: userUq },
     ] = await Promise.all([
       supabase.from("user_progress").select("*").eq("user_id", userId).maybeSingle(),
-      supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", userId),
+      supabase.from("user_artifact_progress").select("*").eq("user_id", userId).eq("artifact_id", data.artifactId).maybeSingle(),
       supabase.from("user_badges").select("badge_id").eq("user_id", userId),
       supabase.from("user_quests").select("quest_id").eq("user_id", userId),
       supabase.from("user_achievements").select("achievement_id").eq("user_id", userId),
@@ -89,14 +95,14 @@ export const scanArtifact = createServerFn({ method: "POST" })
       supabase.from("user_unique_quests").select("*").eq("user_id", userId),
     ]);
 
-    const scannedIds = new Set((prior ?? []).map((r) => r.artifact_id));
-    const alreadyScanned = scannedIds.has(artifact.id);
+    const alreadyScanned = !!prior;
+    const quizDone = prior?.quiz_correct_count !== null && prior?.quiz_correct_count !== undefined;
     const oldExp = prog?.total_exp ?? 0;
     const oldLevel = prog?.current_level ?? 1;
     const oldPoints = prog?.discount_points ?? 0;
 
-    // Idempotent short circuit.
-    if (alreadyScanned) {
+    // Idempotent short circuit if BOTH scan and quiz are done.
+    if (alreadyScanned && (quizDone || data.correctCount === undefined)) {
       return {
         alreadyScanned: true,
         expGained: 0,
@@ -108,26 +114,34 @@ export const scanArtifact = createServerFn({ method: "POST" })
         newBadges: [],
         newQuests: [],
         newAchievements: [],
+        quizCorrectCount: prior?.quiz_correct_count ?? null,
+        quizTotalQuestions: prior?.quiz_total_questions ?? null,
         uniqueQuest: null,
         offeredUniqueQuest: null,
         artifact,
       };
     }
 
-    // --- Active unique quest branch ---
-    const activeUq = (userUq ?? []).find((u) => u.status === "active");
-    const activeTemplate = activeUq ? (uqTemplatesAll ?? []).find((t) => t.id === activeUq.template_id) : null;
+    // Determine EXP. 
+    let expEarned = 0;
+    if (!alreadyScanned) expEarned += 10; // Discovery bonus
+    if (data.correctCount !== undefined && !quizDone) {
+      expEarned += data.correctCount * 10;
+    }
 
-    let expEarned = EXP_PER_SCAN;
     const newBadges: string[] = [];
     const newAchievements: string[] = [];
     let uqSummary: ScanResult["uniqueQuest"] = null;
 
+    // --- Active unique quest branch ---
+    const activeUq = (userUq ?? []).find((u) => u.status === "active");
+    const activeTemplate = activeUq ? (uqTemplatesAll ?? []).find((t) => t.id === activeUq.template_id) : null;
+
     if (activeUq && activeTemplate) {
       if (artifact.category === activeTemplate.target_category && artifact.id !== activeTemplate.trigger_artifact_id) {
         // Correct
-        const bonus = EXP_PER_SCAN * activeTemplate.reward_multiplier;
-        expEarned = bonus;
+        const bonus = 10 * activeTemplate.reward_multiplier; // Use 10 as base for UQ bonus
+        expEarned += bonus;
         const nextCorrect = (activeUq.correct_scans ?? 0) + 1;
         const complete = nextCorrect >= activeTemplate.target_count;
         await supabase.from("user_unique_quests").update({
@@ -145,7 +159,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
         };
       } else if (artifact.id !== activeTemplate.trigger_artifact_id) {
         // Wrong category — fail
-        expEarned = -activeTemplate.penalty_exp;
+        expEarned -= activeTemplate.penalty_exp;
         await supabase.from("user_unique_quests").update({
           status: "failed",
           updated_at: new Date().toISOString(),
@@ -158,15 +172,38 @@ export const scanArtifact = createServerFn({ method: "POST" })
           penaltyExp: activeTemplate.penalty_exp,
         };
       }
-      // If artifact is the trigger itself while active (shouldn't happen since trigger already scanned), fall through to normal.
     }
 
-    // Insert scan record
-    const { error: insErr } = await supabase
-      .from("user_artifact_progress")
-      .insert({ user_id: userId, artifact_id: artifact.id, exp_earned: expEarned });
-    if (insErr) throw new Error(insErr.message);
-    scannedIds.add(artifact.id);
+    // Insert or Update scan record
+    if (!alreadyScanned) {
+      const { error: insErr } = await supabase
+        .from("user_artifact_progress")
+        .insert({ 
+          user_id: userId, 
+          artifact_id: artifact.id, 
+          exp_earned: expEarned,
+          quiz_correct_count: data.correctCount ?? null,
+          quiz_total_questions: data.correctCount !== undefined ? 3 : null,
+          quiz_completed_at: data.correctCount !== undefined ? new Date().toISOString() : null
+        });
+      if (insErr) throw new Error(insErr.message);
+    } else if (data.correctCount !== undefined && !quizDone) {
+      const { error: updErr } = await supabase
+        .from("user_artifact_progress")
+        .update({ 
+          exp_earned: (prior.exp_earned ?? 0) + expEarned,
+          quiz_correct_count: data.correctCount,
+          quiz_total_questions: 3,
+          quiz_completed_at: new Date().toISOString()
+        })
+        .eq("user_id", userId)
+        .eq("artifact_id", artifact.id);
+      if (updErr) throw new Error(updErr.message);
+    }
+
+    // Refresh scanned status for quests
+    const { data: currentPrior } = await supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", userId);
+    const scannedIds = new Set((currentPrior ?? []).map((r) => r.artifact_id));
 
     // --- Category & grand quests (normal) ---
     const newQuests: string[] = [];
@@ -208,9 +245,9 @@ export const scanArtifact = createServerFn({ method: "POST" })
     if (!earnedBadgeIds.has("ahli-kuest") && (newQuests.some((q) => q.startsWith("quest-") && q !== "quest-grand") || [...doneQuestIds].some((q) => q.startsWith("quest-") && q !== "quest-grand"))) {
       newBadges.push("ahli-kuest");
     }
-    if (scanCount >= 6 && !earnedBadgeIds.has("separuh-jalan")) newBadges.push("separuh-jalan");
+    if (scanCount >= 8 && !earnedBadgeIds.has("separuh-jalan")) newBadges.push("separuh-jalan");
     if (scanCount === TOTAL_ARTIFACTS && !earnedBadgeIds.has("peneroka-muzium")) newBadges.push("peneroka-muzium");
-    // dedupe
+
     const badgesToInsert = [...new Set(newBadges)].filter((b) => !earnedBadgeIds.has(b));
     if (badgesToInsert.length) {
       await supabase.from("user_badges").insert(badgesToInsert.map((badge_id) => ({ user_id: userId, badge_id })));
@@ -257,7 +294,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
     }
 
     return {
-      alreadyScanned: false,
+      alreadyScanned,
       expGained: expEarned,
       totalExp: newExp,
       level: newLevel,
@@ -267,6 +304,8 @@ export const scanArtifact = createServerFn({ method: "POST" })
       newBadges: badgesToInsert,
       newQuests,
       newAchievements,
+      quizCorrectCount: data.correctCount ?? (prior?.quiz_correct_count ?? null),
+      quizTotalQuestions: data.correctCount !== undefined ? 3 : (prior?.quiz_total_questions ?? null),
       uniqueQuest: uqSummary,
       offeredUniqueQuest: offered,
       artifact,

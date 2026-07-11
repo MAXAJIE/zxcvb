@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Sparkles, Scroll } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { artifactImageUrl } from "@/lib/artifact-images";
 import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
 
 export const Route = createFileRoute("/_authenticated/journey")({
@@ -77,11 +78,22 @@ function JourneyPage() {
       ) : (
         <ol className="space-y-3">
           {data.map((row, i) => {
-            const art = (row as { artifacts?: { id: string; name_bm: string; name_en: string; category: string; image_url: string | null } | null }).artifacts;
+            const art = (
+              row as {
+                artifacts?: {
+                  id: string;
+                  name_bm: string;
+                  name_en: string;
+                  category: string;
+                  image_url: string | null;
+                } | null;
+              }
+            ).artifacts;
             if (!art) return null;
             const cat = art.category as CategoryKey;
             const meta = CATEGORY_META[cat];
             const nm = lang === "bm" ? art.name_bm : art.name_en;
+            const imageUrl = artifactImageUrl(art.id, art.image_url);
             const isLatest = i === 0;
             return (
               <li
@@ -94,8 +106,8 @@ function JourneyPage() {
                   className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl text-3xl"
                   style={{ background: meta.bg }}
                 >
-                  {art.image_url ? (
-                    <img src={art.image_url} alt={nm} className="h-full w-full object-contain p-1.5" />
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={nm} className="h-full w-full object-contain p-1.5" />
                   ) : (
                     <span>{meta.emoji}</span>
                   )}
@@ -120,11 +132,14 @@ function JourneyPage() {
                     {formatWhen(row.scanned_at, lang)}
                     <span className="text-muted-foreground/60">·</span>
                     <span className="tabular-nums">
-                      {new Date(row.scanned_at).toLocaleDateString(lang === "bm" ? "ms-MY" : "en-MY", {
-                        year: "numeric",
-                        month: "short",
-                        day: "2-digit",
-                      })}
+                      {new Date(row.scanned_at).toLocaleDateString(
+                        lang === "bm" ? "ms-MY" : "en-MY",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "2-digit",
+                        },
+                      )}
                     </span>
                   </p>
                 </div>

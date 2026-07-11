@@ -10,15 +10,55 @@ Pick one — all are free for hobby use.
 2. Click **Publish** (top-right).
 3. You get a public URL like `https://<your-app>.lovable.app` — open it on **any phone / laptop / tablet**.
 
-### Option B — Cloudflare Pages (free, custom URL)
+### Option B — Cloudflare Workers (free, SSR-capable, recommended for this app)
+
+This app uses **TanStack Start SSR** — it needs a server runtime, not just static
+files. Deploy as a **Worker**, not as Pages.
+
+**Step 1 — build:**
 
 ```bash
 bun install
-bun run build           # produces .output/ for TanStack Start
-bunx wrangler pages deploy .output/public --project-name heritagequest
+bun run build                       # produces .output/ (Nitro Cloudflare target)
 ```
 
-Wrangler prints a `https://heritagequest.pages.dev` URL you can share.
+**Step 2 — set the Supabase env vars on the Worker (REQUIRED).**
+
+The server side of the app reads `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
+from `process.env` at request time. Locally these come from `.env`, but a
+deployed Cloudflare Worker does **not** read your local `.env` — you MUST
+provide them to the Worker. If you skip this step you'll see
+`Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY`
+the moment any server function runs (e.g. submitting an artifact code).
+
+Both values are **publishable** (safe to commit / paste) so use plain vars,
+not secrets. Copy them from your local `.env`:
+
+```bash
+# from repo root — one-shot deploy with vars baked in
+bunx wrangler deploy \
+  --config .output/server/wrangler.json \
+  --var SUPABASE_URL:"https://<your-project-ref>.supabase.co" \
+  --var SUPABASE_PUBLISHABLE_KEY:"sb_publishable_xxxxxxxxxxxxxxxxxxxx"
+```
+
+> Re-run the same command every time you deploy — `--var` values are only
+> attached to that upload. Prefer to set them once? Add a `[vars]` block to
+> `.output/server/wrangler.json` before `wrangler deploy`, or run
+> `bunx wrangler secret put SUPABASE_URL --config .output/server/wrangler.json`
+> (and the same for `SUPABASE_PUBLISHABLE_KEY`) so they persist across deploys.
+
+Wrangler prints your URL: `https://<worker-name>.<your-account>.workers.dev`.
+Open **that** URL on any device.
+
+> ⚠️ **Do NOT use `wrangler pages deploy .output/public`.**
+> That command uploads only static assets, so SSR routes never run, and the
+> per-deploy preview alias it prints (e.g. `https://<hash>.heritagequest.pages.dev`)
+> is a **3-level subdomain** that Cloudflare's `*.pages.dev` wildcard cert does
+> **not** cover — you'll get `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`. If you
+> already deployed to Pages, open the production alias
+> `https://heritagequest.pages.dev` (2 levels) — the hash alias will never work
+> in a browser regardless.
 
 ### Option C — Quick LAN / hotspot share (no deploy, same Wi-Fi)
 
@@ -33,6 +73,7 @@ To share **outside your Wi-Fi** without deploying, tunnel it:
 bunx cloudflared tunnel --url http://localhost:8080
 # → https://xxxx-xxxx.trycloudflare.com   (temporary public URL)
 ```
+
 
 > **Note on sign-up email confirmation**
 > When a new user signs up, the app now shows an on-screen notice telling them

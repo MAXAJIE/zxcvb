@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ArtifactsCodeRouteImport } from './routes/artifacts.$code'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedRewardsRouteImport } from './routes/_authenticated/rewards'
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
@@ -19,7 +20,6 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticated/journey'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
-import { Route as AuthenticatedBadgesRouteImport } from './routes/_authenticated/badges'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AuthenticatedArtifactIdRouteImport } from './routes/_authenticated/artifact.$id'
 
@@ -35,6 +35,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtifactsCodeRoute = ArtifactsCodeRouteImport.update({
+  id: '/artifacts/$code',
+  path: '/artifacts/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
@@ -72,11 +77,6 @@ const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBadgesRoute = AuthenticatedBadgesRouteImport.update({
-  id: '/badges',
-  path: '/badges',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedAchievementsRoute =
   AuthenticatedAchievementsRouteImport.update({
     id: '/achievements',
@@ -93,7 +93,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
-  '/badges': typeof AuthenticatedBadgesRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/map': typeof AuthenticatedMapRoute
@@ -101,13 +100,13 @@ export interface FileRoutesByFullPath {
   '/quests': typeof AuthenticatedQuestsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/artifacts/$code': typeof ArtifactsCodeRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
-  '/badges': typeof AuthenticatedBadgesRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/journey': typeof AuthenticatedJourneyRoute
   '/map': typeof AuthenticatedMapRoute
@@ -115,6 +114,7 @@ export interface FileRoutesByTo {
   '/quests': typeof AuthenticatedQuestsRoute
   '/rewards': typeof AuthenticatedRewardsRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/artifacts/$code': typeof ArtifactsCodeRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
 }
 export interface FileRoutesById {
@@ -123,7 +123,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
-  '/_authenticated/badges': typeof AuthenticatedBadgesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/journey': typeof AuthenticatedJourneyRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
@@ -131,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/rewards': typeof AuthenticatedRewardsRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
+  '/artifacts/$code': typeof ArtifactsCodeRoute
   '/_authenticated/artifact/$id': typeof AuthenticatedArtifactIdRoute
 }
 export interface FileRouteTypes {
@@ -139,7 +139,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/achievements'
-    | '/badges'
     | '/journal'
     | '/journey'
     | '/map'
@@ -147,13 +146,13 @@ export interface FileRouteTypes {
     | '/quests'
     | '/rewards'
     | '/scan'
+    | '/artifacts/$code'
     | '/artifact/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/achievements'
-    | '/badges'
     | '/journal'
     | '/journey'
     | '/map'
@@ -161,6 +160,7 @@ export interface FileRouteTypes {
     | '/quests'
     | '/rewards'
     | '/scan'
+    | '/artifacts/$code'
     | '/artifact/$id'
   id:
     | '__root__'
@@ -168,7 +168,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/achievements'
-    | '/_authenticated/badges'
     | '/_authenticated/journal'
     | '/_authenticated/journey'
     | '/_authenticated/map'
@@ -176,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quests'
     | '/_authenticated/rewards'
     | '/_authenticated/scan'
+    | '/artifacts/$code'
     | '/_authenticated/artifact/$id'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +183,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ArtifactsCodeRoute: typeof ArtifactsCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -206,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artifacts/$code': {
+      id: '/artifacts/$code'
+      path: '/artifacts/$code'
+      fullPath: '/artifacts/$code'
+      preLoaderRoute: typeof ArtifactsCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/scan': {
@@ -257,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/badges': {
-      id: '/_authenticated/badges'
-      path: '/badges'
-      fullPath: '/badges'
-      preLoaderRoute: typeof AuthenticatedBadgesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/achievements': {
       id: '/_authenticated/achievements'
       path: '/achievements'
@@ -283,7 +284,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
-  AuthenticatedBadgesRoute: typeof AuthenticatedBadgesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedJourneyRoute: typeof AuthenticatedJourneyRoute
   AuthenticatedMapRoute: typeof AuthenticatedMapRoute
@@ -296,7 +296,6 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
-  AuthenticatedBadgesRoute: AuthenticatedBadgesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedJourneyRoute: AuthenticatedJourneyRoute,
   AuthenticatedMapRoute: AuthenticatedMapRoute,
@@ -314,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ArtifactsCodeRoute: ArtifactsCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
